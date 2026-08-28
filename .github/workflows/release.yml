@@ -45,7 +45,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create release manifest and checksums
-        env: { GH_TOKEN: ${{ github.token }}, TAG: ${{ github.ref_name }} }
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
           mkdir release-assets
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release-assets
