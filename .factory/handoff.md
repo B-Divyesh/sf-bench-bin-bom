@@ -35,22 +35,25 @@ of JavaScript (6.54 KB gzip), 7.65 KB CSS (2.54 KB gzip); its generated hero is
 add BOM demand, and observe the expected shortage. Axe found 0 serious or
 critical issues on app and landing page. App console errors: 0.
 
+## Release verification
+
+GitHub Actions run `33156317164` passed all four native builds and the manifest
+job. Release [v0.1.0](https://github.com/B-Divyesh/sf-bench-bin-bom/releases/tag/v0.1.0)
+contains `.dmg` (arm64 and x64), `.msi`/`.exe`, `.AppImage`/`.deb`/`.rpm`,
+`SHA256SUMS`, and valid `latest.json`. Downloaded the Windows MSI and verified
+its SHA-256 against both files:
+
+`c9e1c2322159f62319a55eb93e162b148bcf213fb9b2bb6fa533bc17ccb6ac0d`
+
 ## Known gaps
 
-- No GitHub Release has been published from this disposable builder container,
-  so the live landing page cannot yet resolve a real versioned installer. The
-  workflow is ready: tag and push `v0.1.0` from the product repository, then
-  its release assets and manifest become live.
-- The landing page’s GitHub release request returns a benign 404 locally until
-  that first release exists; it degrades to “downloads will appear” copy.
 - Desktop installers are intentionally unsigned. The app does not implement
   an auto-updater, so no updater manifest is shipped.
 
 ## Needs operator action
 
-- Push the commit and `v0.1.0` tag so GitHub Actions can create the first
-  release. Confirm assets, `SHA256SUMS`, and `latest.json`, then deploy
-  `dist/site`.
+- Deploy `dist/site` to the factory static host. The release and its detected
+  per-platform asset links are already live.
 - Optional code-signing secrets for a signed release: `APPLE_CERTIFICATE`,
   `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`,
   `WINDOWS_CERT_PFX`, and `WINDOWS_CERT_PASSWORD`. The current workflow does
