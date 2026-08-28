@@ -5,4 +5,8 @@ dist/
 graphify-out/
 src-tauri/target/
 src-tauri/gen/
+src-tauri/icons/*
+!src-tauri/icons/icon.png
+!src-tauri/icons/icon.ico
+!src-tauri/icons/icon.icns
 .DS_Store
