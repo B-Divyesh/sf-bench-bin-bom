@@ -1,0 +1,26 @@
+{
+  "name": "bench-bin-bom",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:site": "vite --config vite.site.config.ts",
+    "build": "tsc --noEmit && vite build",
+    "build:site": "tsc --noEmit && vite build --config vite.site.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "playwright": "^1.58.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^3.0.4"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.2.0"
+  }
+}

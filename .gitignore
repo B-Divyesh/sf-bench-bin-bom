@@ -3,4 +3,6 @@ dist/
 .env
 *.log
 graphify-out/
+src-tauri/target/
+src-tauri/gen/
 .DS_Store

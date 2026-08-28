@@ -1,0 +1,5 @@
+import './style.css';
+type Release = { tag_name:string; assets?:{name:string;browser_download_url:string}[] };
+const button = document.querySelector<HTMLAnchorElement>('#download')!; const note = document.querySelector<HTMLElement>('#download-note')!;
+const platform = navigator.userAgent.includes('Windows') ? 'windows' : navigator.userAgent.includes('Mac') ? 'macos' : 'linux';
+fetch('https://api.github.com/repos/B-Divyesh/sf-bench-bin-bom/releases/latest').then((response) => response.ok ? response.json() : Promise.reject()).then((release:Release) => { const needle = platform === 'windows' ? '.msi' : platform === 'macos' ? '.dmg' : '.appimage'; const asset = release.assets?.find((item) => item.name.toLowerCase().includes(needle)); if (!asset) throw new Error(); button.href = asset.browser_download_url; button.textContent = `Download for ${platform === 'macos' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`; note.textContent = `Version ${release.tag_name.replace(/^v/, '')} · unsigned installers`; }).catch(() => { note.textContent = 'Release downloads will appear here when version 0.1 ships.'; });

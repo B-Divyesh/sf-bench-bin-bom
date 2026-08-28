@@ -1,0 +1,66 @@
+name: Release desktop installers
+on:
+  push: { tags: ['v*'] }
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            args: --target aarch64-apple-darwin
+          - os: macos-latest
+            args: --target x86_64-apple-darwin
+          - os: windows-latest
+            args: ''
+          - os: ubuntu-latest
+            args: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Install Linux packaging dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: aarch64-apple-darwin,x86_64-apple-darwin }
+      - uses: tauri-apps/tauri-action@v0
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Bench Bin BOM ${{ github.ref_name }}'
+          releaseBody: 'Unsigned desktop installers. On macOS use right-click → Open; Windows SmartScreen may ask for confirmation.'
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+  manifest:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create release manifest and checksums
+        env: { GH_TOKEN: ${{ github.token }}, TAG: ${{ github.ref_name }} }
+        run: |
+          mkdir release-assets
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release-assets
+          (cd release-assets && sha256sum * > SHA256SUMS)
+          python3 - <<'PY' > release-assets/latest.json
+          import glob,json,os
+          tag=os.environ['TAG']; repo=os.environ['GITHUB_REPOSITORY']; assets=glob.glob('release-assets/*')
+          url=lambda f:f'https://github.com/{repo}/releases/download/{tag}/'+os.path.basename(f)
+          pick=lambda needles:next((f for f in assets if all(n.lower() in os.path.basename(f).lower() for n in needles)),None)
+          platforms={}
+          for key, needles in [('windows',['.msi']),('linux',['.appimage']),('macos',['.dmg'])]:
+            f=pick(needles)
+            if f:
+              name=os.path.basename(f)
+              digest=next(line.split()[0] for line in open('release-assets/SHA256SUMS') if line.rstrip().endswith('  '+name))
+              platforms[key]={'url':url(f),'sha256':digest}
+          print(json.dumps({'version':tag.lstrip('v'),'platforms':platforms}))
+          PY
+      - uses: softprops/action-gh-release@v2
+        with: { tag_name: ${{ github.ref_name }}, files: 'release-assets/SHA256SUMS\nrelease-assets/latest.json' }
