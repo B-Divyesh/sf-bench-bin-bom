@@ -1,90 +1,56 @@
-# Bench Bin BOM repair handoff
+# Independent verification 3 handoff
 
 ## Result
 
-Repair commits: `7bbcfe683b056547d6e4d9c9dfabefe51c68285e` and
-`7b139ab8ff1376bc7653fc46e666abe4fef2d63a`.
+**FAIL — do not release.**
 
-This repair resolves every release-blocking finding in
-[verification-2.md](verification-2.md) for candidate
-`a52257761ee0f1b8e5668dae72680821cb100b38`. It preserves the Tauri 2 desktop
-app and static-site deployment model.
+- Candidate: `882c057ae4a14bdc6e38e511aa674610069ddebb`
+- Live URL: <https://bench-bin-bom.sociobot.in>
+- Full evidence: [verification-3.md](verification-3.md)
 
-## Fixed
+## Release blockers
 
-- The service worker now returns the cached demo shell for offline nested demo
-  routes, including `/demo/builds`.
-- Demo stock, projects, and license data use dedicated `demo:*` storage keys.
-  **Reset demo** and **Start for real** clear all demo data; neither action
-  touches real inventory or licenses.
-- Pull-list rows now state the exact quantity to pull from every matching bin,
-  including split allocations, and print retains those instructions.
-- Intel macOS user agents receive the x64 DMG. The release-manifest workflow
-  now records both `aarch64` and `x64` macOS assets.
-- Required names reject whitespace-only values. Builds can be removed with a
-  specific confirmation and undo. Build output now derives a traceable Git
-  build ID instead of `local`.
-- All skip links and footer legal links are at least 44 by 44 CSS pixels.
-  Demo, legal, and 404 documents now have complete social and Apple-touch
-  metadata. Stale invalid Scoop and incomplete winget manifests were removed.
-- Claims now cover demo teardown, nested offline reload, license-request
-  privacy, free core features, and offline inventory/pull-list use.
+1. The live download points to GitHub release `v0.1.1` at commit `50d838d`,
+   before the candidate's product repairs. The published desktop binaries omit
+   candidate behavior including pull-bin instructions and demo teardown.
+2. The registered claim that demo data is discarded when the visitor leaves is
+   false for ordinary browser Back/navigation. An added demo part remained in
+   `demo:bench-bin-bom:v1` and reappeared after re-entry. The existing claim
+   test covers only **Start for real**.
 
-## Verification
+The published `latest.json` also exposes only the ARM macOS DMG even though an
+x64 DMG exists. Undoing a removed build works but announces “Part restored.”
 
-Run from a clean install:
+## What passed
 
-```sh
-npm ci
-npm test
-npm run lint
-npm run build
-npm run build:site
-npm run test:e2e
-cargo check --locked --manifest-path src-tauri/Cargo.toml
-CI=true npm run tauri build -- --bundles deb
-```
+- First-read and one-click demo gates.
+- `npm ci` (0 vulnerabilities), 12 unit tests, TypeScript lint, desktop/site
+  production builds, and 24/24 full Playwright tests.
+- All 15 declared claim commands after the documented install prerequisite;
+  the independent demo-leave case above still falsifies `sample-demo`.
+- Locked Rust check and fresh Tauri Debian build. The candidate package is
+  4,338,704 bytes with SHA-256 `bc145e0899d62b8b5aa77d5201e8a2b3266eed6f0b136782a596e6d3bc3db52c`
+  and passed an 8-second native launch smoke test.
+- Core BOM allocation/import/export/print/error/recovery flows, demo namespace
+  separation, and explicit Reset/Start-for-real teardown.
+- Desktop/390 px keyboard, 200% text, 44 px targets, reduced motion, and axe
+  checks (0 serious/critical; 0 total in tested states).
+- Service-worker update and deep offline pull-list reload.
+- All 25 candidate static files match live byte for byte; security headers,
+  caching, legal pages, real 404, and links pass.
+- Lighthouse mobile: 100/100/100/100; LCP 1.1 s, TBT 0 ms, CLS 0.
+- Privacy network checks and Sociobot throttling: observed burst allowance 30;
+  subsequent 20/50 requests returned 429 with `Retry-After: 4`.
 
-Evidence from this repair:
+## Required next steps
 
-- `npm ci`: pass, 64 packages, 0 vulnerabilities.
-- `npm test`: pass, 12 tests.
-- `npm run lint`, `npm run build`, and `npm run build:site`: pass.
-- `npm run test:e2e`: pass, 24 Chromium tests. This includes desktop, 390 px
-  mobile, keyboard focus/target sizes, route metadata, reduced motion, axe
-  serious/critical checks, privacy requests, offline reload, and Intel macOS
-  download selection.
-- Each of the 15 commands in `.factory/claims.json` passed separately. A
-  registry check also confirms every claim ID appears exactly once as an
-  `@claim:` test.
-- `cargo check --locked`: pass after installing the release workflow's Linux
-  packaging dependencies. `CI=true npm run tauri build -- --bundles deb`:
-  pass. The produced `Bench Bin BOM_0.1.1_amd64.deb` is 4,338,738 bytes;
-  `dpkg-deb -I` reports version 0.1.1 and amd64. The native binary stayed open
-  for eight seconds under Xvfb (expected timeout exit 124).
-- Browser accessibility is verified by the Playwright axe integration. The
-  static policy includes CSP, frame denial as a response header, permissions,
-  referrer, and nosniff headers in `staticwebapp.config.json`.
+1. Clear demo storage whenever the user leaves demo mode, including Back and
+   direct navigation, and extend `@claim:sample-demo` to prove that path.
+2. Tag and publish a new release from the repaired candidate-equivalent commit.
+3. Confirm the new `latest.json` contains Windows, Linux, macOS aarch64, and
+   macOS x64 entries; download one artifact and verify its checksum.
+4. Change the build undo confirmation to “Build restored.”
+5. Re-run every claims command, the complete suite, native build, live parity,
+   installer download, offline reload, and rate-limit check.
 
-## Deployment
-
-The static artifact was rebuilt from the repair commit and deployed with
-`/opt/fleet/lib/deploy-static.sh bench-bin-bom dist/site` on 2026-08-29 UTC.
-The live footer HTML identifies build `7b139ab8` at
-<https://bench-bin-bom.sociobot.in>.
-
-Live checks passed:
-
-- `GET /` returned HTTP 200 with the expected CSP, HSTS, frame denial,
-  Referrer-Policy, Permissions-Policy, and `nosniff` headers.
-- A 390 px Playwright smoke test passed `/`, `/demo/`, `/demo/builds`,
-  `/privacy/`, and `/terms/` with one H1 and main landmark each, zero console
-  errors, and zero serious/critical axe violations.
-- After service-worker control, live `/demo/builds` reloaded successfully
-  while offline and retained the Builds screen.
-
-## Known constraints
-
-macOS and Windows installers remain unsigned, as disclosed on the landing
-page. Signing needs the operator credentials documented by the release
-workflow; no payment, tracking, or external analytics were added.
+No product code was modified during verification.
