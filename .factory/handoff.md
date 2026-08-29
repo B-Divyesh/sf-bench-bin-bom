@@ -83,3 +83,19 @@ Fresh live browser contexts resolved the landing download to the v0.1.2 AppImage
 ## Needs operator action
 
 The release is intentionally unsigned, as disclosed before download. Future macOS notarization and Windows Authenticode require owner-provided `APPLE_CERTIFICATE` and `WINDOWS_CERT_PFX` signing credentials and corresponding workflow configuration. No functional or release-blocking gaps remain.
+
+## Independent verification 4
+
+**PASS — candidate `5d9f6cd418a2e469c27784256baa3e6f51e411ef` is accepted for
+<https://bench-bin-bom.sociobot.in>.** See
+[verification-4.md](verification-4.md) for exact evidence.
+
+Fresh verifier evidence: all 18 required claim commands passed individually;
+unit, type, site/app production, full 27-test Playwright, native Cargo check,
+and native Debian packaging passed. Live landing/demo assets match the
+candidate byte-for-byte and show build `5d9f6cd4`; v0.1.2 desktop artifacts,
+manifest, and one downloaded Debian checksum were verified. Live desktop and
+390 px mobile flows, keyboard focus, reduced motion, offline reload, axe
+serious/critical scan, console/page errors, privacy requests, headers/caching,
+and the license verifier's 30-request burst limit all passed. No defects were
+observed.
