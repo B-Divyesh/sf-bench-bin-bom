@@ -39,7 +39,7 @@ build routes.
 
 ## Package and deploy
 
-Push a version tag such as `v0.1.4` to build installers for macOS, Windows, and
+Push a version tag such as `v0.1.5` to build installers for macOS, Windows, and
 Linux. The release also publishes `SHA256SUMS` and `latest.json`.
 Installers are unsigned.
 

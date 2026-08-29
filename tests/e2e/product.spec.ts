@@ -11,6 +11,7 @@ const TOKEN_KEY = 'sb_license:bench-bin-bom';
 const VERDICT_KEY = `${TOKEN_KEY}:verdict`;
 const DEMO_TOKEN_KEY = 'demo:sb_license:bench-bin-bom';
 const DEMO_VERDICT_KEY = `${DEMO_TOKEN_KEY}:verdict`;
+const APP_VERSION = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')).version;
 
 function fortyParts() {
   return Array.from({ length:40 }, (_, index) => ({
@@ -599,6 +600,7 @@ test('public navigation, legal links, titles, focus, and 404 remain real routes'
   expect(config.responseOverrides['404'].rewrite).toBe('/404.html');
   await page.goto('/demo/?demo=1');
   await expect(page).toHaveTitle('Demo — Bench Bin BOM');
+  await expect(page.getByText(new RegExp(`Built by Param Factory · v${APP_VERSION}`))).toBeVisible();
   await page.getByRole('link', { name:/Builds/ }).click();
   await expect(page.getByRole('heading', { level:1 })).toBeFocused();
   await page.goBack();

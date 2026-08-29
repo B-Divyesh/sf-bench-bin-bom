@@ -1,8 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
 
 const base = process.env.VERIFY_BASE_URL || 'https://bench-bin-bom.sociobot.in';
 const evidence = process.env.VERIFY_EVIDENCE_DIR || new URL('../.factory/evidence/polish-2/', import.meta.url).pathname;
+const appVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const browser = await chromium.launch();
 
@@ -27,8 +29,8 @@ try {
   assert(await page.getByText('Checkout opens on an external site.').count() === 1, 'checkout disclosure is missing');
   assert(await page.getByText('Your operating system may ask you to confirm it.').count() === 0, 'unsupported installer prediction remains');
   assert((await page.locator('#download').getAttribute('aria-label'))?.includes('GitHub'), 'download is not externally labelled');
-  await page.getByText(/Version 0\.1\.4\./).waitFor();
-  assert((await page.locator('#download').getAttribute('href'))?.includes('/releases/download/v0.1.4/'), 'live download does not use release 0.1.4');
+  await page.getByText(`Version ${appVersion}.`).waitFor();
+  assert((await page.locator('#download').getAttribute('href'))?.includes(`/releases/download/v${appVersion}/`), `live download does not use release ${appVersion}`);
   let axe = await new AxeBuilder({ page }).analyze();
   assert(axe.violations.filter((item) => ['serious','critical'].includes(item.impact || '')).length === 0, 'home has serious axe violations');
   await page.screenshot({ path:`${evidence}live-home-390.png`, fullPage:true });
