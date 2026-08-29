@@ -12,6 +12,10 @@ const buildId = process.env.GITHUB_SHA?.slice(0, 8) || process.env.VITE_BUILD_ID
 export default defineConfig({
   root: 'site',
   publicDir: resolve(here, 'public'),
+  plugins: [{
+    name: 'traceable-build-id',
+    transformIndexHtml(html) { return html.replaceAll('__BUILD_ID__', buildId); }
+  }],
   define: {
     __BUILD_ID__: JSON.stringify(buildId)
   },
