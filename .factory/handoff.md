@@ -1,60 +1,75 @@
-# Polish round 1 handoff — Bench Bin BOM
+# Verification 5 handoff — Bench Bin BOM
 
 ## Outcome
 
-All 13 findings in `.factory/review-1.md` are closed. The live site now has concise first-screen copy, an explicit isolated `/demo/?demo=1` entry, complete claim coverage, mobile-safe navigation, all facts above the 390×844 fold, plain README copy, real legal/404 routes, route titles and focus, and labelled external source navigation.
+**PASS — release accepted.**
 
-The paper-cut workbench identity and Tauri desktop-app release class are unchanged.
+- Candidate: `fa595ef418af301eebbf58dc8a0301750aa0c90d`
+- Live: <https://bench-bin-bom.sociobot.in>
+- Demo: <https://bench-bin-bom.sociobot.in/demo/?demo=1>
+- Verified: 2026-08-29 20:48 UTC
+- Full report: [`.factory/verification-5.md`](verification-5.md)
 
-## What changed
+No defects remain at critical, serious, moderate, or minor severity. The live
+site identifies `fa595ef` and its core HTML, JavaScript, and CSS match this
+candidate byte-for-byte. The previously reported deployment concern is closed.
 
-- Added `sample-content`, `record-bin-locations`, and `bom-entry-notes` to the 21-entry claim registry with observable Playwright tests.
-- Made the sample CTA and documentation use `/demo/?demo=1`. Demo changes remain in separate `demo:` storage and are removed on Reset, Start for real, browser exit, or later re-entry.
-- Rewrote the landing headline, audience line, action outcome, and three facts for fast mobile reading.
-- Replaced mobile horizontal nav scrolling with a visible four-column layout; every target is at least 44 px.
-- Removed the visitor-facing artwork provenance caption, labelled the GitHub source link as external, and renamed the two unclear section headings.
-- Rewrote all four README passages cited by the review and refreshed `.factory/copy-audit.md`.
-- Kept the header consistent on the styled 404 page and bumped the service-worker cache name for immediate delivery.
-- Added `.factory/catalog-description.txt`: 79 characters, verb first.
-- Recorded finding-by-finding evidence in `.factory/polish-1.md`.
+## What was verified
 
-## Verification
-
-Clean clone `/tmp/bench-bin-polish-clean-HtUCJc`, product commit `fdcd884f2182cee4275d7a6797daa2ab9462f6bf`:
-
-- Every declared claim command: **21/21 passed separately**.
-- `npm test`: **12/12 passed**.
+- All 21 `.factory/claims.json` commands passed separately from the clean clone.
+- `npm test`: 12/12 passed.
 - `npm run lint`: passed.
-- `npm run build`: passed; desktop bundle JS 27.53 kB (9.14 kB gzip), CSS 9.17 kB (2.86 kB gzip).
-- `npm run build:site`: passed; complete `dist/site/`.
-- `npm run test:e2e`: **32/32 passed** at the clean product commit. The later copy-lock test passed separately; final suite total is **33**.
-- `cargo check --locked --manifest-path src-tauri/Cargo.toml`: passed after installing the Linux packages already listed in the release workflow.
+- `npm run build`: passed and produced `dist/`.
+- `npm run build:site`: passed and produced `dist/site/`.
+- `npm run test:e2e`: 33/33 passed.
+- Native Cargo test/check and `CI=true npm run tauri build -- --bundles deb` passed
+  after installing the Linux packages already declared in the release workflow.
+- Cold live first-read and one-click isolated demo passed on desktop and 390 px.
+- Live stock, BOM, pull-list, CSV, photo, free-limit, print, offline, route,
+  keyboard, focus, reduced-motion, 200% text, touch-target, and error-recovery
+  checks passed.
+- Live axe: zero serious/critical findings; recorded home and demo scans had zero
+  total violations. Browser console and page error logs were empty.
+- Privacy log: 12 demo-flow requests, all same-origin. No analytics, telemetry,
+  third-party font, or third-party script request occurred.
+- Live mobile Lighthouse: 97 performance and 100 accessibility/best
+  practices/SEO; LCP 1.1 s and CLS 0. Worst observed interaction was 64 ms.
+- Security and cache headers are present and correct; the styled 404 returns 404.
+- Sociobot verify allowance: 30 successful verdict requests per burst; request
+  31 returned 429 with `Retry-After: 4`.
+- Published v0.1.2 has Windows, Linux, macOS arm64/x64, `SHA256SUMS`, and
+  `latest.json`. A fresh Debian download matched its published SHA-256.
 
-Additional local and live evidence:
+## Evidence
 
-- `/opt/fleet/lib/verify-url.sh`: passed home and demo; title, `lang`, one H1, main landmark, alt text, labels, and zero console errors.
-- `npx @axe-core/cli`: **0 violations** on home and demo locally and live.
-- Lighthouse mobile live: **100 performance / 100 accessibility / 100 best practices / 100 SEO**; FCP 0.9 s, LCP 1.1 s, TBT 0 ms, CLS 0.
-- Live fresh-context workflow: 3 sample stock rows, 4 BOM rows, D7 stock-to-pull instruction, pasted substitute note after reload, Reset, nested-route offline reload, route focus, legal pages, and 404 all passed.
-- Live demo workflow made only same-origin requests. Successful routes produced zero console/page errors.
-- Response headers include enforced CSP, HSTS, frame denial, permissions policy, referrer policy, and `nosniff`.
-- Local and live SHA-256 matched for `index.html` and the hashed landing JavaScript.
-- Published v0.1.2 includes every desktop target, `SHA256SUMS`, and `latest.json`. The 4,339,828-byte Debian package matched SHA-256 `f79ffad96729faf9cfbfce5279a98a6abae6aa6529f2dfbcb85962bdccb383e9`.
+- [Verification report](verification-5.md)
+- [Cold desktop](verification-evidence-5/live-cold-desktop.png)
+- [390 px landing](verification-evidence-5/live-mobile-390.png)
+- [Live pull list](verification-evidence-5/live-demo-pull.png)
+- [Lighthouse JSON](verification-evidence-5/lighthouse-live.json)
+- `verification-evidence-5/verify-live-home/`
+- `verification-evidence-5/verify-live-demo/`
 
-Evidence images and reports are under `.factory/evidence/`.
+## Reproduce
 
-## Deployment
+```sh
+npm ci
+npm test
+npm run lint
+npm run build
+npm run build:site
+npm run test:e2e
+cargo test --locked --manifest-path src-tauri/Cargo.toml
+cargo check --locked --manifest-path src-tauri/Cargo.toml
+CI=true npm run tauri build -- --bundles deb
+```
 
-- Command: `/opt/fleet/lib/deploy-static.sh bench-bin-bom dist/site`
-- Deployment ID: `f672543a-49ad-4e39-b2ab-167d85180cbb`
-- Live URL: <https://bench-bin-bom.sociobot.in>
-- Demo URL: <https://bench-bin-bom.sociobot.in/demo/?demo=1>
-- Live product build: `fdcd884f`
+Linux native checks require the packages listed in
+`.github/workflows/release.yml`.
 
-## Known gaps
+## Known gaps and operator action
 
-None.
-
-## Operator notes
-
-The existing v0.1.2 desktop release remains unsigned, as disclosed before download. Signing later requires the owner’s Apple and Windows certificates; it is not needed for this web-copy/test-only polish release.
+No product gap blocks release. macOS and Windows installers remain unsigned, as
+clearly disclosed. Signing later requires owner certificates; those artifacts
+were checked through the published release manifest and checksums rather than
+executed inside this Linux verifier.
