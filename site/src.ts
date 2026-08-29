@@ -22,7 +22,8 @@ function showRelease(release: Release) {
   if (!asset) return false;
   button.href = asset.browser_download_url;
   button.textContent = `Download for ${platform === 'macos' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
-  note.textContent = `Version ${release.tag_name.replace(/^v/, '')}. The installer is unsigned.`;
+  button.setAttribute('aria-label', `${button.textContent} (downloads from GitHub)`);
+  note.textContent = `Version ${release.tag_name.replace(/^v/, '')}. The installer is unsigned. Downloads from GitHub.`;
   return true;
 }
 const cached = readCache();
@@ -40,7 +41,8 @@ if (cached && Date.now() - cached.at < HOUR && showRelease(cached.release)) {
       else {
         button.href = releasePage;
         button.textContent = 'See release downloads';
-        note.textContent = 'Downloads are being published. Open the release page to check again.';
+        button.setAttribute('aria-label', 'See release downloads on GitHub (external site)');
+        note.textContent = 'Downloads are being published. Open the GitHub release page to check again.';
       }
     });
 }

@@ -45,6 +45,8 @@ figure img { display:block; width:100%; height:auto; }
 .walkthrough li span { color:var(--muted); margin-top:5px; font-size:15px; }
 .buy { margin:88px 0 0; border:3px solid var(--ink); padding:32px; display:flex; align-items:center; justify-content:space-between; gap:24px; background:#b7dcc9; box-shadow:7px 8px 0 var(--ink); }
 .buy p { max-width:640px; }
+.external-action { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.external-action span { max-width:28ch; font-size:13px; }
 .downloads { display:flex; flex-direction:column; align-items:start; gap:10px; min-width:270px; }
 #download-note { max-width:34ch; font-size:13px; }
 footer { font-size:13px; }

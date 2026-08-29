@@ -76,7 +76,22 @@ function appShell(content: string) {
 
 function inventory() {
   const rows = state.parts.length ? state.parts.map((part) => `<li class="part-row"><div class="part-photo">${part.photo ? `<img src="${part.photo}" alt="Photo of ${esc(part.name)}">` : '<span aria-hidden="true">●</span>'}</div><div><strong>${esc(part.name)}</strong><span>${esc(part.value || 'No value recorded')}</span></div><div class="number"><b>${part.quantity}</b><span>on hand</span></div><div class="bin">${esc(part.bin || 'Unbinned')}</div><button class="quiet" data-edit-part="${part.id}">Edit</button></li>`).join('') : `<li class="empty"><span aria-hidden="true">▦</span><h2>Your bench is clear</h2><p>Add what is already in the drawers. A build can then show what is missing.</p><div class="action-row"><button class="primary" data-action="new-part">Add first part</button><button class="secondary" data-action="load-sample">Load sample project</button></div></li>`;
-  return appShell(`<section class="intro"><div><p class="eyebrow">Drawer stock</p><h1>Check your stock before you start building</h1><p>For makers and homelab builders who want to catch part shortages before a project stalls.</p><div class="action-row"><button class="primary" data-action="new-part">Add a part</button><button class="secondary" data-action="import-parts">Import CSV</button></div></div><aside class="diorama" aria-label="Paper project list beside component drawers"><span class="paper-line">Project list</span><span class="mini-bin b1">10k</span><span class="mini-bin b2">ESP</span><span class="mini-bin b3">M3</span></aside></section><section class="panel stock"><div class="section-heading"><div><p class="eyebrow">Bench stock</p><h2>${state.parts.length} recorded parts</h2></div><button class="quiet" data-action="export-parts" ${state.parts.length ? '' : 'disabled'}>Export CSV</button></div><ul class="parts">${rows}</ul></section>`);
+  const project = active();
+  const statuses = project ? allocateBom(state.parts, project.bom) : [];
+  const readyIndex = statuses.findIndex((result) => result.ready && result.pulls.length);
+  const shortIndex = statuses.findIndex((result) => !result.ready);
+  const resultLine = (index: number) => {
+    if (!project || index < 0) return '';
+    const line = project.bom[index];
+    const result = statuses[index];
+    const outcome = result.ready
+      ? `Pull ${result.pulls.map((pull) => `${pull.quantity} from ${esc(pull.bin)}`).join(' and ')}`
+      : `${result.shortage} short`;
+    return `<li class="${result.ready ? 'ready' : 'short'}"><span aria-hidden="true">${result.ready ? '✓' : '!'}</span><strong>${esc(line.part)}</strong><b>${outcome}</b></li>`;
+  };
+  const demoIntro = project ? `<section class="demo-overview"><div><p class="eyebrow">Sample stock and project list</p><h1>${esc(project.name)} pull list</h1><p>See a real pull instruction and shortage from the sample bench.</p></div><ul class="demo-results" aria-label="Sample pull results">${resultLine(readyIndex)}${resultLine(shortIndex)}</ul><a class="primary link-button" href="${routePath(`build/${project.id}`)}" data-route="build/${project.id}">Open the full pull list</a></section>` : '';
+  const regularIntro = `<section class="intro"><div><p class="eyebrow">Drawer stock</p><h1>Check your stock before you start building</h1><p>For makers and homelab builders who want to catch part shortages before a project stalls.</p><div class="action-row"><button class="primary" data-action="new-part">Add a part</button><button class="secondary" data-action="import-parts">Import CSV</button></div></div><aside class="diorama" aria-label="Paper project list beside component drawers"><span class="paper-line">Project list</span><span class="mini-bin b1">10k</span><span class="mini-bin b2">ESP</span><span class="mini-bin b3">M3</span></aside></section>`;
+  return appShell(`${demo ? demoIntro : regularIntro}<section class="panel stock"><div class="section-heading"><div><p class="eyebrow">Bench stock</p><h2>${state.parts.length} recorded parts</h2></div><div class="stock-actions">${demo ? '<button class="quiet" data-action="new-part">Add a part</button><button class="quiet" data-action="import-parts">Import CSV</button>' : ''}<button class="quiet" data-action="export-parts" ${state.parts.length ? '' : 'disabled'}>Export CSV</button></div></div><ul class="parts">${rows}</ul></section>`);
 }
 function projects() {
   const cards = state.projects.length ? state.projects.map((project) => {
@@ -97,7 +112,7 @@ function build(project: Project) {
   return appShell(`<section class="build-head"><div><a class="back" href="${routePath('projects')}" data-route="projects">← All builds</a><p class="eyebrow">Project pull card</p><h1>${esc(project.name)}</h1><p>${esc(project.notes || 'No project note yet.')}</p></div><div class="readiness ${short ? 'short' : 'ready'}"><b>${short ? `${short} line${short === 1 ? '' : 's'} to source` : 'Ready to pull'}</b><span>${short ? 'Review shortages before starting.' : 'Everything is recorded on the bench.'}</span></div></section><section class="pull-actions"><button class="primary" data-action="new-line">Add BOM line</button><button class="secondary" data-action="import-bom">Paste or import BOM</button><button class="secondary" data-action="print">Print pull list</button><button class="quiet" data-action="edit-project">Edit build</button></section><section class="panel bom"><div class="table-labels" aria-hidden="true"><span></span><span>Part and pull location</span><span>Need</span><span>Allocated</span><span>Status</span><span></span></div><ul>${lines || '<li class="empty"><h2>No BOM lines</h2><p>Add parts or paste CSV to check this build.</p><button class="primary" data-action="import-bom">Paste BOM</button></li>'}</ul></section><aside class="safety-note"><b>Substitutes need your review.</b> Check ratings, pinouts, and fit before use.</aside>`);
 }
 function about() {
-  return appShell(`<section class="page-heading"><p class="eyebrow">Local desktop tool</p><h1>About Bench Bin BOM</h1><p>Bench Bin BOM stores your inventory and projects on this device.</p></section><section class="panel prose"><h2>Bench Pass costs $12 once</h2><p>The free app records up to 40 stock parts and two builds. Bench Pass removes those limits. CSV export, accessibility, and safety notes stay free.</p><a class="primary link-button" href="https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout">Buy Bench Pass for $12</a><p>${hasLicense() ? 'A verified Bench Pass is active on this device.' : 'Already bought Bench Pass?'} <button class="inline" data-action="restore-license">Paste a license</button></p><p>The app checks a saved license at most once each day when online.</p></section>`);
+  return appShell(`<section class="page-heading"><p class="eyebrow">Local desktop tool</p><h1>About Bench Bin BOM</h1><p>Bench Bin BOM stores your inventory and projects on this device.</p></section><section class="panel prose"><h2>Bench Pass costs $12 once</h2><p>The free app records up to 40 stock parts and two builds. Bench Pass removes those limits. CSV export, accessibility, and safety notes stay free.</p><a class="primary link-button" href="https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout" aria-label="Buy Bench Pass for $12 (opens secure Sociobot checkout)">Buy Bench Pass for $12</a><p>Opens secure Sociobot checkout.</p><p>${hasLicense() ? 'A verified Bench Pass is active on this device.' : 'Already bought Bench Pass?'} <button class="inline" data-action="restore-license">Paste a license</button></p><p>The app checks a saved license at most once each day when online.</p></section>`);
 }
 function legal(kind: 'privacy' | 'terms') {
   const privacy = kind === 'privacy';
@@ -110,7 +125,7 @@ function render(moveFocus = false) {
   root.innerHTML = route.startsWith('build/') ? (project ? build(project) : appShell('<section class="empty"><h1>That build is not here</h1><p>It may have been removed from this device.</p><a class="primary link-button" href="/builds" data-route="projects">See builds</a></section>')) : route === 'projects' ? projects() : route === 'about' ? about() : route === 'privacy' || route === 'terms' ? legal(route) : inventory();
   const heading = root.querySelector<HTMLElement>('h1')!;
   const titles: Record<string, string> = { inventory: 'Bench stock — Bench Bin BOM', projects: 'Builds — Bench Bin BOM', about: 'About — Bench Bin BOM', privacy: 'Privacy — Bench Bin BOM', terms: 'Terms — Bench Bin BOM' };
-  document.title = route.startsWith('build/') ? `${heading.textContent} — Bench Bin BOM` : titles[route];
+  document.title = route.startsWith('build/') ? `${heading.textContent} — Bench Bin BOM` : demo && route === 'inventory' ? 'Demo — Bench Bin BOM' : titles[route];
   bind();
   if (moveFocus) {
     heading.tabIndex = -1;
@@ -206,12 +221,15 @@ function bomDialog(line?: BomLine) {
   });
 }
 function importDialog(kind: 'parts' | 'bom') {
-  const dialog = openDialog(modal(kind === 'bom' ? 'Paste a BOM' : 'Import bench CSV', `<p>Use CSV columns: ${kind === 'bom' ? 'part, value, quantity, substitute, note.' : 'name, value, quantity, bin, note.'}</p><label>CSV<textarea required name="csv" rows="9" placeholder="part,value,quantity&#10;10k resistor,1/4W,8"></textarea></label><p class="error" aria-live="polite"></p><footer><button class="secondary" type="button" data-cancel>Cancel</button><button class="primary" type="submit">Import rows</button></footer>`));
-  dialog.addEventListener('submit', (event) => {
+  const fileControl = kind === 'bom' ? '<p class="choice">or</p><label>BOM CSV file<input name="csv-file" type="file" accept=".csv,text/csv" aria-describedby="bom-file-help"></label><p id="bom-file-help" class="help">Choose a CSV file from this device. The file stays in the app.</p>' : '';
+  const dialog = openDialog(modal(kind === 'bom' ? 'Paste or import a BOM' : 'Import bench CSV', `<p>Use CSV columns: ${kind === 'bom' ? 'part, value, quantity, substitute, note.' : 'name, value, quantity, bin, note.'}</p><label>Paste CSV rows<textarea ${kind === 'parts' ? 'required' : ''} name="csv" rows="7" placeholder="part,value,quantity&#10;10k resistor,1/4W,8"></textarea></label>${fileControl}<p class="error" aria-live="polite"></p><footer><button class="secondary" type="button" data-cancel>Cancel</button><button class="primary" type="submit">${kind === 'bom' ? 'Import BOM rows' : 'Import stock rows'}</button></footer>`));
+  dialog.addEventListener('submit', async (event) => {
     event.preventDefault();
     const error = dialog.querySelector('.error');
-    const raw = String(new FormData(event.target as HTMLFormElement).get('csv'));
+    const form = new FormData(event.target as HTMLFormElement);
+    const file = form.get('csv-file') as File | null;
     try {
+      const raw = file?.size ? await file.text() : String(form.get('csv') || '');
       let next: AppState;
       if (kind === 'bom') {
         const project = active();

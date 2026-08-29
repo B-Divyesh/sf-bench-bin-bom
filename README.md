@@ -1,11 +1,11 @@
 # Bench Bin BOM
 
 Bench Bin BOM is a desktop app for makers and homelab builders. It checks a
-project BOM against parts already stored in bench drawers.
+project parts list (BOM) against parts stored in your bench drawers.
 
 Stock, projects, optional photos, and license details use local app storage.
-There is no analytics or telemetry. CSV import and export keep the stock list
-portable. Each physical part is allocated once across duplicate BOM rows.
+The app does not track how you use it. CSV import and export keep the stock
+list portable. Each physical part is allocated once across duplicate BOM rows.
 
 Try the isolated sample at <https://bench-bin-bom.sociobot.in/demo/?demo=1>.
 The demo uses separate storage and never reads real data. It is discarded when
@@ -30,11 +30,8 @@ cargo check --locked --manifest-path src-tauri/Cargo.toml
 npm run tauri build -- --bundles deb
 ```
 
-`npm run build` writes the desktop WebView bundle to `dist/`.
-`npm run build:site` writes the complete deployable site to `dist/site/`.
-The browser suite checks the public product on desktop and mobile. It checks
-keyboard use, accessibility, privacy, offline reload, legal pages, demo
-isolation, response security, and each [registered claim](.factory/claims.json).
+Build the desktop app with `npm run build`. Build the landing site with
+`npm run build:site`. Run the browser checks with `npm run test:e2e`.
 
 The desktop app keeps inventory and pull lists available without a network
 connection. The web demo works offline after its first visit, including nested
@@ -42,8 +39,8 @@ build routes.
 
 ## Package and deploy
 
-Push a `v*` tag to run the Tauri release matrix for macOS arm64/x64, Windows,
-and Linux. The release also publishes `SHA256SUMS` and `latest.json`.
+Push a version tag such as `v0.1.3` to build installers for macOS, Windows, and
+Linux. The release also publishes `SHA256SUMS` and `latest.json`.
 Installers are unsigned, so macOS and Windows may ask for confirmation.
 
 The landing page checks GitHub for the latest release and keeps that result for

@@ -1,1 +1,1 @@
-Compare a project BOM with the parts in your drawers before you start building.
+Check a project parts list against your bench drawers and find shortages before building.

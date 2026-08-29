@@ -30,6 +30,10 @@ Dialogs use the browser's native focus-managed opening. Removing a record
 offers an Undo toast until the next action. When reduced motion is requested,
 all movement is removed; state uses immediate color and text changes.
 
+The demo opens with a compact paper pull card above the stock list. Its green
+and red stamped results are computed from the sample data, so a phone viewport
+shows the real task without replacing the tactile workbench identity.
+
 ## Color-mode policy
 
 This product intentionally uses one explicitly painted treatment. Warm paper

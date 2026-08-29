@@ -28,13 +28,22 @@ test('cold first screen names the job, audience, next step, and exact price', as
 });
 
 test('@claim:sample-demo sample data is one click away, isolated, and discarded on exit', async ({ page }) => {
+  await page.setViewportSize({ width:390, height:844 });
   await page.route('https://api.sociobot.in/**', (route) => route.fulfill({ status:200, contentType:'application/json', body:'{"valid":false,"reason":"invalid"}' }));
   await page.goto('/');
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ parts:[{ name:'Private part' }], projects:[] })), REAL_KEY);
   await page.getByRole('link', { name:'Try it with sample data' }).click();
   await expect(page).toHaveURL(/\/demo\/\?demo=1$/);
+  await expect(page).toHaveTitle('Demo — Bench Bin BOM');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
-  await expect(page.getByText('ESP32 DevKit')).toBeVisible();
+  const samplePart = page.locator('.demo-results').getByText('ESP32 DevKit');
+  const usefulResult = page.locator('.demo-results').getByText('Pull 1 from A1');
+  for (const item of [samplePart, usefulResult]) {
+    const box = await item.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+  }
   await expect(page.getByText('Private part')).toHaveCount(0);
   await page.getByRole('button', { name:'Reset demo' }).click();
   const real = await page.evaluate((key) => localStorage.getItem(key), REAL_KEY);
@@ -102,8 +111,8 @@ test('@claim:bom-entry-notes pasted BOM substitute notes persist beside the save
   await page.getByRole('link', { name:/Builds/ }).click();
   await page.getByRole('link', { name:'Open pull list' }).click();
   await page.getByRole('button', { name:'Paste or import BOM' }).click();
-  await page.getByRole('textbox', { name:'CSV' }).fill('JST lead,2-pin,1,"Dupont lead; check pin order",sensor cable');
-  await page.getByRole('button', { name:'Import rows' }).click();
+  await page.getByRole('textbox', { name:'Paste CSV rows' }).fill('JST lead,2-pin,1,"Dupont lead; check pin order",sensor cable');
+  await page.getByRole('button', { name:'Import BOM rows' }).click();
   const line = page.locator('.bom-row').filter({ hasText:'JST lead' });
   await expect(line).toContainText('sensor cable');
   await expect(line).toContainText('Substitute: Dupont lead; check pin order');
@@ -111,6 +120,41 @@ test('@claim:bom-entry-notes pasted BOM substitute notes persist beside the save
   await page.reload();
   await expect(page.locator('.bom-row').filter({ hasText:'JST lead' })).toContainText('Substitute: Dupont lead; check pin order');
   await context.setOffline(false);
+});
+
+test('@claim:bom-file-import a selected CSV file adds BOM rows through the existing parser', async ({ page }) => {
+  await page.goto('/demo/?demo=1');
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  await page.getByRole('button', { name:'Paste or import BOM' }).click();
+  await page.getByLabel('BOM CSV file').setInputFiles({
+    name:'weather-node-addition.csv',
+    mimeType:'text/csv',
+    buffer:Buffer.from('part,value,quantity,substitute,note\nJST socket,2-pin,2,,Sensor leads')
+  });
+  await page.getByRole('button', { name:'Import BOM rows' }).click();
+  const line = page.locator('.bom-row').filter({ hasText:'JST socket' });
+  await expect(line).toContainText('2-pin');
+  await expect(line).toContainText('Sensor leads');
+  expect(await page.evaluate((key) => localStorage.getItem(key), DEMO_KEY)).toContain('JST socket');
+});
+
+test('@claim:stock-shortage-check recorded stock is compared with demand and shows pull and shortage results', async ({ page }) => {
+  await page.goto('/demo/?demo=1');
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({
+    parts:[{ id:'relay-stock', name:'Bench relay', value:'5V', quantity:2, bin:'B4', note:'' }],
+    projects:[{ id:'relay-build', name:'Relay timer', notes:'', updatedAt:'2026-08-29T12:00:00.000Z', bom:[
+      { id:'relay-line', part:'Bench relay', value:'5V', needed:3, substitute:'', note:'' }
+    ] }],
+    activeProjectId:'relay-build'
+  })), DEMO_KEY);
+  await page.reload();
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  const line = page.locator('.bom-row').filter({ hasText:'Bench relay' });
+  await expect(line).toContainText('Pull: 2 from B4');
+  await expect(line).toContainText('2allocated');
+  await expect(line).toContainText('1 short');
 });
 
 test('@claim:bom-allocation duplicate BOM rows allocate stock only once', async ({ page }) => {
@@ -152,11 +196,11 @@ test('Cancel and Close never save a part, including at the free limit', async ({
 test('@claim:csv-import-export quoted CSV imports intact and exports', async ({ page }) => {
   await page.goto('/demo/');
   await page.getByRole('button', { name:'Import CSV' }).click();
-  await page.getByRole('textbox', { name:'CSV' }).fill('Widget,10k,-5,A1,precision');
-  await page.getByRole('button', { name:'Import rows' }).click();
+  await page.getByRole('textbox', { name:'Paste CSV rows' }).fill('Widget,10k,-5,A1,precision');
+  await page.getByRole('button', { name:'Import stock rows' }).click();
   await expect(page.getByText(/quantity must be a whole number of 0 or more/)).toBeVisible();
-  await page.getByRole('textbox', { name:'CSV' }).fill('Widget,"10k, 1%",2,A1,precision');
-  await page.getByRole('button', { name:'Import rows' }).click();
+  await page.getByRole('textbox', { name:'Paste CSV rows' }).fill('Widget,"10k, 1%",2,A1,precision');
+  await page.getByRole('button', { name:'Import stock rows' }).click();
   await expect(page.getByText('Widget')).toBeVisible();
   await expect(page.getByText('10k, 1%')).toBeVisible();
   const download = page.waitForEvent('download');
@@ -417,7 +461,10 @@ test('mobile navigation, route focus, metadata, and accessibility pass', async (
   for (const name of ['Bench stock', 'Builds', 'About']) {
     const link = page.getByRole('link', { name:new RegExp(name) });
     await expect(link).toBeVisible();
-    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    const box = (await link.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
   }
   await page.getByRole('link', { name:/Builds/ }).click();
   await expect(page).toHaveURL(/\/demo\/builds$/);
@@ -464,19 +511,28 @@ test('reviewed landing and README copy stays plain and self-explanatory', async 
   const readme = readFileSync(resolve(process.cwd(), 'README.md'), 'utf8');
   expect(readme).toContain('Bench Bin BOM is a desktop app for makers and homelab builders.');
   expect(readme).toContain('The demo uses separate storage and never reads real data.');
-  expect(readme).toContain('The browser suite checks the public product on desktop and mobile.');
+  expect(readme).toContain('project parts list (BOM)');
+  expect(readme).toContain('The app does not track how you use it.');
+  expect(readme).toContain('Run the browser checks with `npm run test:e2e`.');
   expect(readme).toContain('The landing page checks GitHub for the latest release');
   expect(readme).not.toContain('Tauri desktop app');
   expect(readme).not.toContain('CORS-enabled');
+  expect(readme).not.toContain('WebView');
+  expect(readme).not.toContain('release matrix');
+  expect(readme).not.toContain('registered claim');
   await page.goto('/');
   await expect(page.getByRole('heading', { name:'How to create a pull list from your parts' })).toBeVisible();
   await expect(page.getByRole('heading', { name:'What Bench Bin BOM does not check' })).toBeVisible();
   await expect(page.locator('figcaption')).toHaveCount(0);
+  await expect(page.getByText('Try the real workflow')).toHaveCount(0);
+  await expect(page.getByText('Clear boundaries')).toHaveCount(0);
+  await expect(page.getByText('parts list (BOM)')).toBeVisible();
+  await expect(page.getByText('Opens secure Sociobot checkout.')).toBeVisible();
   await expect(page.getByRole('link', { name:'View source on GitHub (opens external site)' })).toBeVisible();
 });
 
 test('legal, metadata, clean artifact, and response policy files are complete', async ({ page }) => {
-  for (const [route, title, heading] of [['/privacy/', 'Privacy — Bench Bin BOM', 'Privacy'], ['/terms/', 'Terms — Bench Bin BOM', 'Terms'], ['/404.html', 'Page not found — Bench Bin BOM', 'That page is not in this drawer']]) {
+  for (const [route, title, heading] of [['/privacy/', 'Privacy — Bench Bin BOM', 'Privacy'], ['/terms/', 'Terms — Bench Bin BOM', 'Terms'], ['/404.html', 'Page not found — Bench Bin BOM', 'Page not found']]) {
     await page.goto(route);
     await expect(page).toHaveTitle(title);
     await expect(page.getByRole('heading', { level:1 })).toHaveText(heading);
@@ -523,10 +579,11 @@ test('public navigation, legal links, titles, focus, and 404 remain real routes'
   }
   await page.goto('/404.html');
   await expect(page).toHaveTitle('Page not found — Bench Bin BOM');
-  await expect(page.getByRole('heading', { level:1 })).toHaveText('That page is not in this drawer');
+  await expect(page.getByRole('heading', { level:1 })).toHaveText('Page not found');
   const config = JSON.parse(readFileSync(resolve(process.cwd(), 'dist/site/staticwebapp.config.json'), 'utf8'));
   expect(config.responseOverrides['404'].rewrite).toBe('/404.html');
   await page.goto('/demo/?demo=1');
+  await expect(page).toHaveTitle('Demo — Bench Bin BOM');
   await page.getByRole('link', { name:/Builds/ }).click();
   await expect(page.getByRole('heading', { level:1 })).toBeFocused();
   await page.goBack();

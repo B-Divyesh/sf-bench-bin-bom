@@ -1,6 +1,6 @@
-# Copy audit — polish round 1
+# Copy audit — polish round 2
 
-Audited 2026-08-29. Counts treat hyphenated terms, URLs, and prices as one word. No sentence exceeds 22 words. No banned marketing word appears. Headings, actions, and navigation labels were also read out of context; each names its destination or result.
+Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as one word. No sentence exceeds 22 words. No banned marketing word appears. Headings, actions, and navigation labels name their destination or result.
 
 ## Landing page
 
@@ -13,7 +13,7 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, and prices as one word.
 | The desktop app works offline. | 5 |
 | Free: 40 parts and two builds. | 6 |
 | Bench Pass: $12 once. | 4 |
-| The sample includes three stock items and a four-line weather-node BOM. | 11 |
+| The sample includes three stock items and a four-line weather-node parts list (BOM). | 13 |
 | Add quantities and bin locations, or import CSV. | 8 |
 | Paste the BOM and keep substitute notes beside each line. | 10 |
 | Each physical part is allocated once across the BOM. | 9 |
@@ -22,20 +22,24 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, and prices as one word.
 | The free app holds 40 stock parts and two builds. | 10 |
 | Bench Pass removes those limits. | 5 |
 | CSV export, accessibility, and safety notes stay free. | 8 |
+| Opens secure Sociobot checkout. | 4 |
 | Download the unsigned installer for your computer. | 7 |
 | Your operating system may ask you to confirm it. | 9 |
-| Finding the latest release… | 4 |
-| Compare a project BOM with parts in your drawers. | 9 |
+| Checking GitHub for the latest release. | 6 |
+| Downloads open on GitHub. | 4 |
+| Compare a project parts list with parts in your drawers. | 10 |
+| Version 0.1.2. | 2 |
 | The installer is unsigned. | 4 |
+| Downloads from GitHub. | 3 |
 
 ## README
 
 | Sentence | Words |
 | --- | ---: |
 | Bench Bin BOM is a desktop app for makers and homelab builders. | 12 |
-| It checks a project BOM against parts already stored in bench drawers. | 12 |
+| It checks a project parts list (BOM) against parts stored in your bench drawers. | 14 |
 | Stock, projects, optional photos, and license details use local app storage. | 11 |
-| There is no analytics or telemetry. | 6 |
+| The app does not track how you use it. | 9 |
 | CSV import and export keep the stock list portable. | 9 |
 | Each physical part is allocated once across duplicate BOM rows. | 10 |
 | Try the isolated sample at https://bench-bin-bom.sociobot.in/demo/?demo=1. | 6 |
@@ -45,18 +49,17 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, and prices as one word.
 | Bench Pass costs US$12 once and removes those record limits. | 10 |
 | It does not gate CSV export, accessibility, or safety notes. | 10 |
 | The app reuses a verified license result for one day. | 10 |
-| npm run build writes the desktop WebView bundle to dist/. | 10 |
-| npm run build:site writes the complete deployable site to dist/site/. | 11 |
-| The browser suite checks the public product on desktop and mobile. | 11 |
-| It checks keyboard use, accessibility, privacy, offline reload, legal pages, demo isolation, response security, and each registered claim. | 18 |
+| Build the desktop app with npm run build. | 8 |
+| Build the landing site with npm run build:site. | 8 |
+| Run the browser checks with npm run test:e2e. | 8 |
 | The desktop app keeps inventory and pull lists available without a network connection. | 13 |
 | The web demo works offline after its first visit, including nested build routes. | 13 |
-| Push a v* tag to run the Tauri release matrix for macOS arm64/x64, Windows, and Linux. | 16 |
+| Push a version tag such as v0.1.3 to build installers for macOS, Windows, and Linux. | 16 |
 | The release also publishes SHA256SUMS and latest.json. | 8 |
 | Installers are unsigned, so macOS and Windows may ask for confirmation. | 11 |
 | The landing page checks GitHub for the latest release and keeps that result for one hour. | 16 |
 | If that lookup fails, it links to the release page. | 10 |
-| /install.sh and /install.ps1 verify SHA-256 before installation. | 9 |
+| /install.sh and /install.ps1 verify SHA-256 before installation. | 7 |
 | The PowerShell path installs the published MSI with Windows Installer. | 10 |
 | Deploy the static site with: | 5 |
 | Core inventory use sends no data to third parties. | 9 |
@@ -72,7 +75,7 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, and prices as one word.
 | --- | --- |
 | Physical inventory item | part |
 | Stored inventory list | bench stock |
-| Project requirements | BOM |
+| Project requirements | parts list (BOM on first use) |
 | Checked project list | pull list |
 | Paid license | Bench Pass |
 | Storage location | bin |
