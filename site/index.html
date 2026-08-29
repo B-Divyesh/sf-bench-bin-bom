@@ -1,1 +1,105 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="A local desktop app that compares a project BOM with what is already in your drawers."><title>Bench Bin BOM — check stock before you build</title><script type="module" src="/src.ts"></script></head><body><a class="skip" href="#main">Skip to content</a><header><a class="brand" href="/"><span>▣</span> Bench Bin <b>BOM</b></a><nav><a href="#how">How it works</a><a href="#buy">Bench Pass</a></nav></header><main id="main"><section class="hero"><div><p class="eyebrow">Local-first desktop app</p><h1>Pull from the bench, not your memory.</h1><p class="lede">Compare a project BOM to the parts in your drawers before you buy—or start a build.</p><div class="downloads"><a id="download" class="primary" href="https://github.com/B-Divyesh/sf-bench-bin-bom/releases">Download for your computer</a><span id="download-note">Finding the latest release…</span></div><p class="fine">Free to record 40 parts and 2 builds. <a href="#buy">One-time Bench Pass</a> removes limits. No telemetry.</p></div><figure><img src="/assets/bench-diorama.webp" width="1152" height="768" fetchpriority="high" decoding="async" alt="A component drawer organized with electronic parts on a workbench"><figcaption>Original AI-generated illustration, made for Bench Bin BOM.</figcaption></figure></section><section id="how" class="steps"><article><span>1</span><h2>Record the drawers</h2><p>Add a part, value, quantity, bin, and optional local photo. Import old lists as CSV.</p></article><article><span>2</span><h2>Paste your BOM</h2><p>Bring in a project list, quantities and substitute notes. It stays on your device.</p></article><article><span>3</span><h2>See the real pull list</h2><p>Every line says ready or short. Print it, source the gaps, then build without surprise reorders.</p></article></section><section id="buy" class="buy"><div><p class="eyebrow">Bench Pass</p><h2>Keep the core tool useful. Own the expanded bench.</h2><p>One-time purchase. Free export, accessibility, and safety notes are never locked. The paid unlock removes the free record limits and adds print layout presets.</p></div><a class="primary" href="https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout">Buy Bench Pass</a></section><section class="safety"><b>Substitutions need your review.</b> This is a planning tool, not electrical safety advice. Check ratings, pinouts and fit yourself.</section></main><footer><span>Bench Bin BOM · Local data by default</span><span><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="https://github.com/B-Divyesh/sf-bench-bin-bom">Source</a></span></footer></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Compare a project BOM with parts in your drawers before a maker or homelab build stalls.">
+  <link rel="canonical" href="https://bench-bin-bom.sociobot.in/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Bench Bin BOM — check parts before you build">
+  <meta property="og:description" content="Compare a project BOM with parts in your drawers before a build stalls.">
+  <meta property="og:image" content="https://bench-bin-bom.sociobot.in/assets/social-card.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bench Bin BOM — check parts before you build">
+  <meta name="twitter:description" content="Compare a project BOM with parts in your drawers before a build stalls.">
+  <meta name="twitter:image" content="https://bench-bin-bom.sociobot.in/assets/social-card.jpg">
+  <meta name="theme-color" content="#172a3a">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <title>Bench Bin BOM — check parts before you build</title>
+  <script type="module" src="/src.ts"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header>
+    <a class="brand" href="/"><span aria-hidden="true">▣</span> Bench Bin <b>BOM</b></a>
+    <nav aria-label="Main navigation">
+      <a href="/demo/">Demo</a>
+      <a href="#how">How it works</a>
+      <a href="#download-section">Download</a>
+      <a href="/privacy/">Privacy</a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Desktop parts checker</p>
+        <h1>Check your parts before you start building</h1>
+        <p class="lede">For makers and homelab builders who want to catch shortages before a project stalls.</p>
+        <div class="hero-actions">
+          <a class="primary" href="/demo/">Try it with sample data</a>
+          <span>Opens a sample bench and pull list in your browser.</span>
+        </div>
+        <ul class="facts">
+          <li>Your inventory stays on this device.</li>
+          <li>The desktop app works without an internet connection.</li>
+          <li>Free for 40 parts and two builds. Bench Pass costs $12 once.</li>
+        </ul>
+      </div>
+      <figure>
+        <img src="/assets/bench-diorama-v1.webp" width="1152" height="768" fetchpriority="high" decoding="async" alt="Component drawers beside a paper project list on a workbench">
+        <figcaption>Original generated illustration made for Bench Bin BOM.</figcaption>
+      </figure>
+    </section>
+    <section class="product-preview" aria-labelledby="preview-title">
+      <div>
+        <p class="eyebrow">Try the real workflow</p>
+        <h2 id="preview-title">See stock, shortages, and duplicate demand</h2>
+        <p>The sample includes three stock items and a four-line weather-node BOM.</p>
+      </div>
+      <a class="secondary" href="/demo/">Open the sample bench</a>
+    </section>
+    <section id="how" class="walkthrough" aria-labelledby="walkthrough-title">
+      <p class="eyebrow">How it works</p>
+      <h2 id="walkthrough-title">Move from drawers to a pull list</h2>
+      <ol>
+        <li><img src="/assets/walkthrough-stock.webp" width="760" height="475" loading="lazy" decoding="async" alt="Sample bench stock with three recorded parts"><div><b>1. Record the drawers</b><span>Add quantities and bin locations, or import CSV.</span></div></li>
+        <li><img src="/assets/walkthrough-builds.webp" width="760" height="475" loading="lazy" decoding="async" alt="Sample build card showing shortages"><div><b>2. Open a build</b><span>Paste the BOM and keep substitute notes beside each line.</span></div></li>
+        <li><img src="/assets/walkthrough-pull.webp" width="760" height="475" loading="lazy" decoding="async" alt="Pull list with ready and short BOM lines"><div><b>3. Check the pull list</b><span>Each physical part is allocated once across the BOM.</span></div></li>
+      </ol>
+    </section>
+    <section class="limits" aria-labelledby="limits-title">
+      <div>
+        <p class="eyebrow">Clear boundaries</p>
+        <h2 id="limits-title">It plans. You verify the hardware.</h2>
+      </div>
+      <p>Bench Bin BOM does not order parts or confirm electrical compatibility. Check substitutions, ratings, pinouts, and fit yourself.</p>
+    </section>
+    <section id="buy" class="buy">
+      <div>
+        <p class="eyebrow">Bench Pass</p>
+        <h2>Remove record limits for $12 once</h2>
+        <p>The free app holds 40 stock parts and two builds. Bench Pass removes those limits. CSV export, accessibility, and safety notes stay free.</p>
+      </div>
+      <a class="primary" href="https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout">Buy Bench Pass for $12</a>
+    </section>
+    <section id="download-section" class="download-section">
+      <div>
+        <p class="eyebrow">Desktop app</p>
+        <h2>Install Bench Bin BOM</h2>
+        <p>Download the unsigned installer for your computer. Your operating system may ask you to confirm it.</p>
+      </div>
+      <div class="downloads">
+        <a id="download" class="primary" href="https://github.com/B-Divyesh/sf-bench-bin-bom/releases">See release downloads</a>
+        <span id="download-note" aria-live="polite">Finding the latest release…</span>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span>Compare a project BOM with parts in your drawers.</span>
+    <nav aria-label="Footer navigation"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-bench-bin-bom">Source</a></nav>
+    <span>Built by Param Factory · v0.1.1 · <span data-build-id>local</span></span>
+  </footer>
+</body>
+</html>

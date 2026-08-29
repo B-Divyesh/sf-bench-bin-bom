@@ -1,9 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Bench Bin BOM",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "in.sociobot.bench-bin-bom",
   "build": { "beforeDevCommand": "npm run dev", "beforeBuildCommand": "npm run build", "devUrl": "http://localhost:5173", "frontendDist": "../dist" },
-  "app": { "windows": [{ "title": "Bench Bin BOM", "width": 1200, "height": 820, "minWidth": 360, "minHeight": 600 }], "security": { "csp": "default-src 'self' data: blob:; connect-src 'self' https://api.sociobot.in; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline';" } },
+  "app": { "windows": [{ "title": "Bench Bin BOM", "width": 1200, "height": 820, "minWidth": 360, "minHeight": 600 }], "security": { "csp": "default-src 'self'; connect-src 'self' https://api.sociobot.in; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" } },
   "bundle": { "active": true, "targets": "all", "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"], "category": "Utility", "shortDescription": "Compare a build BOM with your bench stock.", "linux": { "deb": { "depends": [] } } }
 }

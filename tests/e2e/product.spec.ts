@@ -1,0 +1,290 @@
+import AxeBuilder from '@axe-core/playwright';
+import { expect, test } from 'playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const DEMO_KEY = 'demo:bench-bin-bom:v1';
+const REAL_KEY = 'bench-bin-bom:v1';
+const TOKEN_KEY = 'sb_license:bench-bin-bom';
+const VERDICT_KEY = `${TOKEN_KEY}:verdict`;
+
+function fortyParts() {
+  return Array.from({ length:40 }, (_, index) => ({
+    id:`part-${index}`, name:`Part ${index}`, value:'', quantity:1, bin:`A${index}`, note:''
+  }));
+}
+
+test('cold first screen names the job, audience, next step, and exact price', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level:1 })).toHaveText('Check your parts before you start building');
+  await expect(page.getByText(/makers and homelab builders/)).toBeVisible();
+  await expect(page.getByRole('link', { name:'Try it with sample data' })).toHaveAttribute('href', '/demo/');
+  await expect(page.getByText(/Opens a sample bench and pull list/)).toBeVisible();
+  await expect(page.getByText(/Bench Pass costs \$12 once/)).toBeVisible();
+});
+
+test('@claim:sample-demo sample data is one click away and isolated', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ parts:[{ name:'Private part' }], projects:[] })), REAL_KEY);
+  await page.getByRole('link', { name:'Try it with sample data' }).click();
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByText('ESP32 DevKit')).toBeVisible();
+  await expect(page.getByText('Private part')).toHaveCount(0);
+  await page.getByRole('button', { name:'Reset demo' }).click();
+  const real = await page.evaluate((key) => localStorage.getItem(key), REAL_KEY);
+  expect(real).toContain('Private part');
+});
+
+test('@claim:bom-allocation duplicate BOM rows allocate stock only once', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  const screws = page.locator('.bom-row').filter({ hasText:'M3 screw' });
+  await expect(screws).toHaveCount(2);
+  await expect(screws.nth(0)).toContainText('6allocated');
+  await expect(screws.nth(0)).toContainText('Ready');
+  await expect(screws.nth(1)).toContainText('4allocated');
+  await expect(screws.nth(1)).toContainText('2 short');
+  await expect(page.locator('.readiness')).toContainText('2 lines to source');
+});
+
+test('Cancel and Close never save a part, including at the free limit', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Must not save');
+  await page.getByRole('button', { name:'Cancel' }).click();
+  await expect(page.getByText('Must not save')).toHaveCount(0);
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Must not save');
+  await page.getByRole('button', { name:'Close' }).click();
+  await expect(page.getByText('Must not save')).toHaveCount(0);
+
+  await page.evaluate(({ key, parts }) => localStorage.setItem(key, JSON.stringify({ parts, projects:[] })), { key:DEMO_KEY, parts:fortyParts() });
+  await page.reload();
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Over limit');
+  await page.getByRole('button', { name:'Save part' }).click();
+  await expect(page.getByText(/free bench holds 40 parts/)).toBeVisible();
+  await page.getByRole('button', { name:'Cancel' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('@claim:csv-import-export quoted CSV imports intact and exports', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.getByRole('button', { name:'Import CSV' }).click();
+  await page.getByRole('textbox', { name:'CSV' }).fill('Widget,10k,-5,A1,precision');
+  await page.getByRole('button', { name:'Import rows' }).click();
+  await expect(page.getByText(/quantity must be a whole number of 0 or more/)).toBeVisible();
+  await page.getByRole('textbox', { name:'CSV' }).fill('Widget,"10k, 1%",2,A1,precision');
+  await page.getByRole('button', { name:'Import rows' }).click();
+  await expect(page.getByText('Widget')).toBeVisible();
+  await expect(page.getByText('10k, 1%')).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name:'Export CSV' }).click();
+  const file = await download;
+  const body = readFileSync(await file.path()!, 'utf8');
+  expect(body).toContain('"Widget","10k, 1%","2","A1","precision"');
+});
+
+test('@claim:photo-limit large photos are rejected without closing or saving', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Large photo part');
+  await page.getByLabel('Photo').setInputFiles({ name:'large.jpg', mimeType:'image/jpeg', buffer:Buffer.alloc(5 * 1024 * 1024) });
+  await page.getByRole('button', { name:'Save part' }).click();
+  await expect(page.getByText('That photo is larger than 2 MB. Choose a smaller image.')).toBeVisible();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  const saved = await page.evaluate((key) => localStorage.getItem(key), DEMO_KEY);
+  expect(saved || '').not.toContain('Large photo part');
+});
+
+test('@claim:free-limits free mode enforces 40 parts and two builds', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.evaluate(({ key, parts }) => localStorage.setItem(key, JSON.stringify({
+    parts,
+    projects:[
+      { id:'one', name:'One', notes:'', bom:[], updatedAt:new Date().toISOString() },
+      { id:'two', name:'Two', notes:'', bom:[], updatedAt:new Date().toISOString() }
+    ]
+  })), { key:DEMO_KEY, parts:fortyParts() });
+  await page.reload();
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Part 41');
+  await page.getByRole('button', { name:'Save part' }).click();
+  await expect(page.getByText(/free bench holds 40 parts/)).toBeVisible();
+  await page.getByRole('button', { name:'Cancel' }).click();
+  await page.getByRole('button', { name:'New build' }).click();
+  await page.getByLabel('Build name').fill('Build three');
+  await page.getByRole('button', { name:'Create pull card' }).click();
+  await expect(page.getByText(/free bench includes two builds/)).toBeVisible();
+});
+
+test('a new fake license cannot unlock limits during a network failure', async ({ page }) => {
+  await page.route('https://api.sociobot.in/**', (route) => route.abort());
+  await page.goto('/demo/');
+  await page.evaluate(({ key, parts }) => localStorage.setItem(key, JSON.stringify({ parts, projects:[] })), { key:DEMO_KEY, parts:fortyParts() });
+  await page.goto('/demo/?license=totally-fake');
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Part 41');
+  await page.getByRole('button', { name:'Save part' }).click();
+  await expect(page.getByText(/free bench holds 40 parts/)).toBeVisible();
+});
+
+test('@claim:paid-limits a verified Bench Pass removes record limits', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.evaluate(({ demoKey, tokenKey, verdictKey, parts }) => {
+    localStorage.setItem(demoKey, JSON.stringify({ parts, projects:[] }));
+    localStorage.setItem(tokenKey, 'verified-fixture');
+    localStorage.setItem(verdictKey, JSON.stringify({ valid:true, at:Date.now() }));
+  }, { demoKey:DEMO_KEY, tokenKey:TOKEN_KEY, verdictKey:VERDICT_KEY, parts:fortyParts() });
+  await page.reload();
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Part 41');
+  await page.getByRole('button', { name:'Save part' }).click();
+  await expect(page.getByText('Part 41')).toBeVisible();
+});
+
+test('@claim:license-daily a verified result is reused for one day', async ({ page }) => {
+  let requests = 0;
+  await page.route('https://api.sociobot.in/**', async (route) => {
+    requests += 1;
+    await route.fulfill({ status:200, contentType:'application/json', body:'{"valid":true,"reason":"ok"}' });
+  });
+  await page.goto('/demo/');
+  await page.evaluate((key) => localStorage.setItem(key, 'fixture-token'), TOKEN_KEY);
+  await page.reload();
+  await expect.poll(() => requests).toBe(1);
+  await page.reload();
+  await page.waitForTimeout(300);
+  expect(requests).toBe(1);
+});
+
+test('@claim:local-private demo core use sends no data to third parties', async ({ page }) => {
+  const external: string[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== 'http://127.0.0.1:4173') external.push(request.url());
+  });
+  await page.goto('/demo/');
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Local photo');
+  await page.getByLabel('Photo').setInputFiles({ name:'small.png', mimeType:'image/png', buffer:Buffer.from('small-local-fixture') });
+  await page.getByRole('button', { name:'Save part' }).click();
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), DEMO_KEY)).toContain('data:image/png;base64');
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  await page.getByRole('button', { name:'Add BOM line' }).click();
+  await page.getByRole('button', { name:'Cancel' }).click();
+  expect(external).toEqual([]);
+});
+
+test('@claim:offline-reload demo reloads offline after the first visit', async ({ page, context }) => {
+  await page.goto('/demo/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByText('ESP32 DevKit')).toBeVisible();
+  await context.setOffline(false);
+});
+
+test('@claim:price-copy Bench Pass is stated as a $12 one-time purchase', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name:'Remove record limits for $12 once' })).toBeVisible();
+  await page.goto('/terms/');
+  await expect(page.getByText('Bench Pass costs US$12 as a one-time purchase.')).toBeVisible();
+});
+
+test('@claim:installer-checksum both one-line installers verify SHA-256', async ({ request }) => {
+  const shell = await (await request.get('/install.sh')).text();
+  const powershell = await (await request.get('/install.ps1')).text();
+  expect(shell).toContain('sha256sum -c');
+  expect(powershell).toContain('Get-FileHash');
+  expect(powershell).toContain('msiexec.exe');
+  expect(powershell).not.toContain('Expand-Archive');
+});
+
+test('mobile navigation, route focus, metadata, and accessibility pass', async ({ page }) => {
+  await page.setViewportSize({ width:390, height:844 });
+  await page.goto('/demo/');
+  for (const name of ['Bench stock', 'Builds', 'About']) {
+    const link = page.getByRole('link', { name:new RegExp(name) });
+    await expect(link).toBeVisible();
+    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await expect(page).toHaveURL(/\/demo\/builds$/);
+  await expect(page).toHaveTitle('Builds — Bench Bin BOM');
+  await expect(page.getByRole('heading', { level:1 })).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((item) => ['serious','critical'].includes(item.impact || ''))).toEqual([]);
+});
+
+test('desktop landing, keyboard focus, reduced motion, and text resize pass', async ({ page }) => {
+  await page.goto('/');
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((item) => ['serious','critical'].includes(item.impact || ''))).toEqual([]);
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name:'Skip to content' })).toBeFocused();
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  expect(await page.locator('.primary').first().evaluate((element) => getComputedStyle(element).transitionDuration)).toBe('0s');
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+});
+
+test('legal, metadata, clean artifact, and response policy files are complete', async ({ page }) => {
+  await page.goto('/privacy/');
+  await expect(page).toHaveTitle('Privacy — Bench Bin BOM');
+  await expect(page.getByRole('heading', { level:1 })).toHaveText('Privacy');
+  await page.goto('/terms/');
+  await expect(page).toHaveTitle('Terms — Bench Bin BOM');
+  await expect(page.getByRole('heading', { level:1 })).toHaveText('Terms');
+  const root = resolve(process.cwd(), 'dist/site');
+  for (const file of ['404.html','privacy/index.html','terms/index.html','demo/index.html','assets/bench-diorama-v1.webp','install.sh','install.ps1','favicon.ico','robots.txt','sitemap.xml','staticwebapp.config.json']) {
+    expect(() => readFileSync(resolve(root, file))).not.toThrow();
+  }
+  const config = JSON.parse(readFileSync(resolve(root, 'staticwebapp.config.json'), 'utf8'));
+  expect(config.globalHeaders['Content-Security-Policy']).toContain("frame-ancestors 'none'");
+  expect(config.globalHeaders['Permissions-Policy']).toBeTruthy();
+  expect(config.routes.find((route: { route:string }) => route.route === '/assets/*').headers['Cache-Control']).toContain('immutable');
+});
+
+test('all public routes load with one H1 and no browser errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  for (const route of ['/', '/demo/', '/privacy/', '/terms/']) {
+    await page.goto(route, { waitUntil:'networkidle' });
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('main')).toHaveCount(1);
+    expect(await page.title()).not.toBe('');
+  }
+  expect(errors).toEqual([]);
+});
+
+test('@claim:release-cache landing release lookup uses its one-hour cache and calm fallback', async ({ page }) => {
+  let calls = 0;
+  await page.route('https://api.github.com/**', (route) => { calls += 1; return route.abort(); });
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('cache-seeded')) return;
+    sessionStorage.setItem('cache-seeded', '1');
+    localStorage.setItem('bench-bin-bom:release:v1', JSON.stringify({
+      at:Date.now(),
+      release:{ tag_name:'v9.9.9', assets:[
+        { name:'bench-bin-bom.AppImage', browser_download_url:'https://example.test/app.AppImage' },
+        { name:'bench-bin-bom.msi', browser_download_url:'https://example.test/app.msi' },
+        { name:'bench-bin-bom.dmg', browser_download_url:'https://example.test/app.dmg' }
+      ] }
+    }));
+  });
+  await page.goto('/');
+  await expect(page.locator('#download-note')).toContainText('Version 9.9.9');
+  expect(calls).toBe(0);
+  await page.evaluate(() => localStorage.removeItem('bench-bin-bom:release:v1'));
+  await page.reload();
+  await expect(page.locator('#download-note')).toContainText('Downloads are being published');
+  await expect(page.locator('#download')).toHaveAttribute('href', 'https://github.com/B-Divyesh/sf-bench-bin-bom/releases');
+});

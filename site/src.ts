@@ -1,5 +1,47 @@
 import './style.css';
-type Release = { tag_name:string; assets?:{name:string;browser_download_url:string}[] };
-const button = document.querySelector<HTMLAnchorElement>('#download')!; const note = document.querySelector<HTMLElement>('#download-note')!;
+
+declare const __BUILD_ID__: string;
+type Asset = { name: string; browser_download_url: string };
+type Release = { tag_name: string; assets?: Asset[] };
+type CachedRelease = { at: number; release: Release };
+const CACHE_KEY = 'bench-bin-bom:release:v1';
+const HOUR = 3_600_000;
+const releasePage = 'https://github.com/B-Divyesh/sf-bench-bin-bom/releases';
+const button = document.querySelector<HTMLAnchorElement>('#download')!;
+const note = document.querySelector<HTMLElement>('#download-note')!;
 const platform = navigator.userAgent.includes('Windows') ? 'windows' : navigator.userAgent.includes('Mac') ? 'macos' : 'linux';
-fetch('https://api.github.com/repos/B-Divyesh/sf-bench-bin-bom/releases/latest').then((response) => response.ok ? response.json() : Promise.reject()).then((release:Release) => { const needle = platform === 'windows' ? '.msi' : platform === 'macos' ? '.dmg' : '.appimage'; const asset = release.assets?.find((item) => item.name.toLowerCase().includes(needle)); if (!asset) throw new Error(); button.href = asset.browser_download_url; button.textContent = `Download for ${platform === 'macos' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`; note.textContent = `Version ${release.tag_name.replace(/^v/, '')} · unsigned installers`; }).catch(() => { note.textContent = 'Release downloads will appear here when version 0.1 ships.'; });
+
+function readCache(): CachedRelease | null {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); }
+  catch { return null; }
+}
+function showRelease(release: Release) {
+  const needle = platform === 'windows' ? '.msi' : platform === 'macos' ? '.dmg' : '.appimage';
+  const asset = release.assets?.find((item) => item.name.toLowerCase().includes(needle));
+  if (!asset) return false;
+  button.href = asset.browser_download_url;
+  button.textContent = `Download for ${platform === 'macos' ? 'macOS' : platform === 'windows' ? 'Windows' : 'Linux'}`;
+  note.textContent = `Version ${release.tag_name.replace(/^v/, '')}. The installer is unsigned.`;
+  return true;
+}
+const cached = readCache();
+if (cached && Date.now() - cached.at < HOUR && showRelease(cached.release)) {
+  // A fresh cache avoids an unnecessary GitHub API request.
+} else {
+  fetch('https://api.github.com/repos/B-Divyesh/sf-bench-bin-bom/releases/latest')
+    .then((response) => response.ok ? response.json() : Promise.reject(new Error('Release lookup failed')))
+    .then((release: Release) => {
+      if (!showRelease(release)) throw new Error('No matching installer');
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), release }));
+    })
+    .catch(() => {
+      if (cached && showRelease(cached.release)) note.textContent += ' Showing the last saved release.';
+      else {
+        button.href = releasePage;
+        button.textContent = 'See release downloads';
+        note.textContent = 'Downloads are being published. Open the release page to check again.';
+      }
+    });
+}
+document.querySelectorAll<HTMLElement>('[data-build-id]').forEach((element) => { element.textContent = __BUILD_ID__; });
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
