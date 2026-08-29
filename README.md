@@ -1,38 +1,68 @@
 # Bench Bin BOM
 
-Bench Bin BOM is a local-first desktop app for makers and homelab builders who
-want to compare a project BOM with the components already in their drawers. It
-answers “can I start this build?” before a duplicate order or mid-build stop.
+Bench Bin BOM is a Tauri desktop app for makers and homelab builders. It
+compares a project BOM with parts already stored in bench drawers.
 
-All stock, project data, and optional part photos stay in browser/WebView local
-storage. CSV import/export keeps the record portable. Substitute notes are
-planning prompts, not electrical safety advice.
+Stock, projects, optional photos, and license details use local app storage.
+There is no analytics or telemetry. CSV import and export keep the stock list
+portable. Each physical part is allocated once across duplicate BOM rows.
 
-## Run and test
+Try the isolated sample at <https://bench-bin-bom.sociobot.in/demo/>. It uses
+the separate `demo:bench-bin-bom:v1` storage key and never reads real app data.
+
+## Price and limits
+
+Free mode supports 40 stock parts and two builds. Bench Pass costs US$12 once
+and removes those record limits. It does not gate CSV export, accessibility, or
+safety notes. The app reuses a verified license result for one day.
+
+## Run and verify
 
 ```sh
-npm install
-npm run dev       # browser UI
+npm ci
 npm test
-npm run build     # desktop webview bundle → dist/
-npm run build:site # static install site → dist/site/
-npm run tauri dev # desktop shell (requires Rust + system WebKit deps on Linux)
+npm run lint
+npm run build
+npm run build:site
+npm run test:e2e
+cargo check --locked --manifest-path src-tauri/Cargo.toml
+npm run tauri build -- --bundles deb
 ```
 
-`npm run build` is the reproducible desktop frontend build. The Tauri release
-workflow produces unsigned macOS, Windows, and Linux installers after a `v*`
-tag. macOS users may need right-click → Open; Windows SmartScreen may warn
-until the publisher can sign releases.
+`npm run build` writes the desktop WebView bundle to `dist/`.
+`npm run build:site` writes the complete deployable site to `dist/site/`.
+The browser suite covers desktop, 390 px mobile, keyboard focus, axe,
+privacy, offline reload, response policy, legal routes, demo isolation, and
+every claim in [the claim registry](.factory/claims.json).
 
-## Install and deploy
+The desktop app works without an internet connection after installation. The
+web demo works offline after its first visit.
 
-The landing page reads the latest GitHub Release manifest and selects the
-visitor’s platform. It also serves `/install.sh` and `/install.ps1`; both
-verify a release SHA-256 before installation. For the static deployment,
-publish `dist/site`.
+## Package and deploy
 
-The one-time Bench Pass uses Sociobot’s hosted checkout and a locally stored,
-daily-verified license token. No payment provider or tracker is embedded.
+Push a `v*` tag to run the Tauri release matrix for macOS arm64/x64, Windows,
+and Linux. The release also publishes `SHA256SUMS` and `latest.json`.
+Installers are unsigned, so macOS and Windows may ask for confirmation.
+
+The landing page reads the CORS-enabled GitHub Releases API and caches release
+metadata for one hour. If that lookup fails, it links to the release page.
+`/install.sh` and `/install.ps1` verify SHA-256 before installation. The
+PowerShell path installs the published MSI with Windows Installer.
+
+Deploy the static site with:
+
+```sh
+/opt/fleet/lib/deploy-static.sh bench-bin-bom dist/site
+```
+
+## Privacy and safety
+
+Core inventory use sends no data to third parties. License verification sends
+only the saved token to Sociobot. Substitute notes are planning prompts, not
+electrical advice; check ratings, pinouts, and fit.
+
+See [Privacy](https://bench-bin-bom.sociobot.in/privacy/) and
+[Terms](https://bench-bin-bom.sociobot.in/terms/).
 
 ## License
 

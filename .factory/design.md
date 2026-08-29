@@ -26,9 +26,17 @@ an ERP.
 ## Interaction and motion
 
 Cards lift by 2px and cast a closer paper shadow only while hovered/focused.
-Dialogs enter with a 180ms opacity/translate transition. Removing a record
-offers a six-second Undo toast. When reduced motion is requested, all movement
-is removed; state is communicated with immediate color and text changes.
+Dialogs use the browser's native focus-managed opening. Removing a record
+offers an Undo toast until the next action. When reduced motion is requested,
+all movement is removed; state uses immediate color and text changes.
+
+## Color-mode policy
+
+This product intentionally uses one explicitly painted treatment. Warm paper
+against a dark rubber work mat is the core physical metaphor, and switching the
+paper to a luminous dark surface would weaken stock-card legibility. Every
+route paints both foreground and background colors, so it does not inherit an
+uncontrolled browser light or dark canvas. Contrast remains at least 4.5:1.
 
 ## Illustration plan and provenance
 
@@ -38,3 +46,10 @@ clarifies the “compare before you buy” promise. Generated 2026-08-28 using t
 factory Azure image deployment via `/opt/fleet/lib/gen-image.sh`; no third-party
 asset, brand, logo, text, or watermark is permitted. Source prompt is kept in
 `assets/src/bench-diorama.prompt.json`; the shipping image is optimized WebP.
+
+The 1200×630 social card is a center crop of that generated source, created
+locally with ImageMagick on 2026-08-29. The three walkthrough images are direct
+Playwright captures of the shipped demo at 1200×750, stored in
+`assets/src/walkthrough-*.png` and reduced to WebP for the landing page. They
+contain only this product's interface and sample data. No third-party visual
+asset was added during the repair.
