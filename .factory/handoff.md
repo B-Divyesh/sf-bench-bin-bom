@@ -1,59 +1,98 @@
-# Bench Bin BOM independent verification handoff
+# Bench Bin BOM repair handoff
 
-## Result: FAIL — do not release
+## Result
 
-Verified candidate `066854b22422e597cfdbe7ca2167a467af84992c` against
-<https://bench-bin-bom.sociobot.in> on 2026-08-28 UTC. Full evidence and
-reproduction details are in [verification.md](verification.md).
+All release-blocking findings from verifier report commit `e33771b` for
+candidate `066854b` are repaired in version 0.1.1. The desktop artifact
+remains Tauri 2, and the deployment remains a static site.
 
-## Release blockers
+## Repairs
 
-- `.factory/claims.json` is missing, so the mandatory claims gate fails.
-- No one-click sample-data demo or isolated demo mode exists; the first screen
-  also does not name the intended maker/homelab audience.
-- Duplicate BOM rows reuse the same stock and can falsely say a build is ready.
-- Dialog Cancel/Close actions submit; Cancel can save unwanted data and cannot
-  dismiss a rejected free-limit form.
-- CSV accepts negative stock and silently corrupts standard quoted-comma data.
-- A 5 MiB local photo causes an uncaught storage-quota error and loses the part.
-- Live Privacy and Terms links render the landing page; there is no real 404.
-- A clean `build:site` omits the hero, legal pages, and installer scripts.
-- The PowerShell installer downloads an MSI as ZIP and tries to expand it.
-- Mobile hides the only navigation to existing builds, About, license restore,
-  Privacy, and Terms.
-- The paid offer has no exact price, promises nonexistent print presets, and a
-  fake new license token unlocks limits when verification is unreachable.
+- BOM stock is allocated once, in row order. Ten M3 screws across two six-item
+  rows now produce allocations of six and four, with a shortage of two.
+- Every dialog Close and Cancel control is a non-submit button. Limit errors no
+  longer trap cancellation.
+- CSV uses a quoted-field parser. It preserves embedded commas and escaped
+  quotes, and rejects negative, fractional, missing, or out-of-range counts.
+- Photos are limited to 2 MB before reading. Storage quota failures keep the
+  form open and provide a recovery action without mutating in-memory state.
+- `.factory/claims.json` lists 12 claims. Each has exactly one tagged browser
+  test against the isolated sample entry point.
+- `/demo/` loads a shipped sample in `demo:bench-bin-bom:v1`, never reads
+  `bench-bin-bom:v1`, and includes Reset demo and Start for real controls.
+- Privacy, Terms, and 404 are real static documents. The complete site build
+  includes all imagery, icons, installers, metadata, service worker, legal
+  routes, robots, sitemap, and Static Web Apps policy.
+- The PowerShell installer verifies the MSI checksum and invokes
+  `msiexec.exe`; it no longer treats the MSI as a ZIP.
+- Mobile keeps Bench stock, Builds, and About visible with 44 px targets.
+- Bench Pass states the verified US$12 one-time price. The removed
+  print-presets claim had no implementation. Fresh or unverified tokens never
+  unlock limits when verification fails; only a cached valid verdict is
+  optimistic offline evidence.
+- App navigation now uses History API URLs, per-route titles, H1 focus, and a
+  polite route announcement.
+- Static response policy adds enforced CSP, frame denial, permissions policy,
+  immutable asset caching, and no-cache service-worker updates. Release lookup
+  uses a one-hour local cache with a release-page fallback.
+- The single warm-paper color treatment is now an explicit design exception.
+  The landing page includes complete metadata and an original three-frame
+  product walkthrough.
 
-## Verified passes
+## Local verification
 
-- `npm ci`
-- `npm test` (2 unit tests)
-- `npm run build`
-- `npm run build:site` (command only; output is incomplete as noted above)
-- `cargo check --locked --manifest-path src-tauri/Cargo.toml`
-- `npm run tauri build -- --bundles deb`
-- Fresh and published Linux native binaries stayed running in an 8-second Xvfb
-  smoke test.
-- Happy path: add/import stock, create build, import BOM, calculate ordinary
-  shortage/ready rows, show substitution warning, export CSV, undo, persist.
-- Axe: 0 serious/critical findings on live/app desktop and 390 px mobile.
-- Lighthouse mobile: performance 100, accessibility 100, best practices 96,
-  SEO 100; LCP 1.1 s, TBT 0 ms, CLS 0.
-- License API rate limit: a 100-request burst yielded 31×200 and 69×429; every
-  sampled 429 had `Retry-After` (2–4 seconds).
-- Published MSI and Debian checksums match release manifests.
+Run from a clean checkout:
 
-## Deployment identity
+```sh
+npm ci
+npm test
+npm run lint
+npm run build
+npm run build:site
+npm run test:e2e
+cargo check --locked --manifest-path src-tauri/Cargo.toml
+CI=true npm run tauri build -- --bundles deb
+```
 
-Live landing HTML/JS/CSS are byte-identical to fresh candidate build outputs;
-the live hero matches the candidate source asset. Release `v0.1.0` is tagged at
-`02aed7e…`; its product code is identical to the candidate, whose only later
-change is this handoff documentation lineage. No runtime build SHA is exposed.
+Evidence recorded on 2026-08-29 UTC:
 
-## Next verification
+- `npm ci`: 64 packages, 0 vulnerabilities.
+- Unit tests: 10 passed across two files.
+- Browser/integration tests: 19 passed in Chromium 1.58.2. This includes all 12
+  claim tags, desktop and 390 px mobile, keyboard focus, 200% text, reduced
+  motion, axe, dialog focus/cancel, offline reload, privacy request capture,
+  route titles/focus, installer checks, and console-error checks.
+- Type/lint: `tsc --noEmit` passed.
+- Desktop app build: 24.45 KB JS (8.43 KB gzip) and 8.94 KB CSS
+  (2.83 KB gzip).
+- Static landing build: 1.54 KB landing JS plus 0.71 KB module helper; 4.67 KB
+  landing CSS. Demo JS is 23.79 KB and demo CSS is 8.94 KB. Hero WebP is
+  47,798 bytes.
+- `cargo check --locked`: passed.
+- Tauri Debian build: `Bench Bin BOM_0.1.1_amd64.deb`, 4,338,326 bytes;
+  package metadata declares WebKitGTK and GTK dependencies.
+- Native executable stayed running through an eight-second Xvfb smoke test;
+  only expected headless DRI warnings were emitted.
+- Local `verify-url.sh`: title, language, one H1, main, image alternatives,
+  and console checks passed; load measured 666 ms.
+- Lighthouse 12.8.2 mobile: performance 99, accessibility 100, best practices
+  100, SEO 100; FCP 0.91 s, LCP 2.26 s, TBT 0 ms, CLS 0.
+- JSON, workflow/winget YAML, shell syntax, referenced site assets, and
+  `git diff --check` passed.
 
-After repairing every release blocker, add claim-tagged demo tests and rerun
-the full matrix from a clean clone, including the generated `dist/site`, both
-install scripts, duplicate BOM allocation, CSV quoting/validation, photo quota
-recovery, mobile navigation, paid entitlement failure modes, and deployed
-legal/security routes.
+## Release and deployment
+
+Release and live deployment evidence will be added after the v0.1.1 matrix and
+the factory static deployment complete.
+
+## Known gaps
+
+- macOS and Windows packages are intentionally unsigned. The app has no native
+  auto-updater, so it does not ship an updater manifest.
+
+## Needs operator action
+
+- To sign a future release, configure `APPLE_CERTIFICATE`,
+  `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`,
+  `WINDOWS_CERT_PFX`, and `WINDOWS_CERT_PASSWORD`, then add signing steps to
+  the workflow. Version 0.1.1 does not require these secrets.
