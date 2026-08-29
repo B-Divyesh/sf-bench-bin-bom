@@ -8,7 +8,7 @@
 - Isolated demo: <https://bench-bin-bom.sociobot.in/demo/?demo=1>
 - Repair commit: `c50f59d0fbe41dbcaa35d1dd0a4e5193f5d1c5f9`
 - Release commit: `081bc6c90a869cca4fb7229d738ebd9e0d3baf41` (`v0.1.3`)
-- Static deployment: `9c03131b-14aa-4faa-91c9-ccedc460d41d`
+- Static deployment: production from `main`; the live footer and cold check identify the deployed build.
 - Desktop release: <https://github.com/B-Divyesh/sf-bench-bin-bom/releases/tag/v0.1.3>
 
 ## What changed

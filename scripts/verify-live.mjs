@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
 
 const base = process.env.VERIFY_BASE_URL || 'https://bench-bin-bom.sociobot.in';
-const evidence = new URL('../.factory/evidence/polish-2/', import.meta.url).pathname;
+const evidence = process.env.VERIFY_EVIDENCE_DIR || new URL('../.factory/evidence/polish-2/', import.meta.url).pathname;
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const browser = await chromium.launch();
 
