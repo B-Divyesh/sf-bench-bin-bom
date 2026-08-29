@@ -460,6 +460,21 @@ test('390 px landing keeps complete navigation and all first-screen facts in vie
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 
+test('reviewed landing and README copy stays plain and self-explanatory', async ({ page }) => {
+  const readme = readFileSync(resolve(process.cwd(), 'README.md'), 'utf8');
+  expect(readme).toContain('Bench Bin BOM is a desktop app for makers and homelab builders.');
+  expect(readme).toContain('The demo uses separate storage and never reads real data.');
+  expect(readme).toContain('The browser suite checks the public product on desktop and mobile.');
+  expect(readme).toContain('The landing page checks GitHub for the latest release');
+  expect(readme).not.toContain('Tauri desktop app');
+  expect(readme).not.toContain('CORS-enabled');
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name:'How to create a pull list from your parts' })).toBeVisible();
+  await expect(page.getByRole('heading', { name:'What Bench Bin BOM does not check' })).toBeVisible();
+  await expect(page.locator('figcaption')).toHaveCount(0);
+  await expect(page.getByRole('link', { name:'View source on GitHub (opens external site)' })).toBeVisible();
+});
+
 test('legal, metadata, clean artifact, and response policy files are complete', async ({ page }) => {
   for (const [route, title, heading] of [['/privacy/', 'Privacy — Bench Bin BOM', 'Privacy'], ['/terms/', 'Terms — Bench Bin BOM', 'Terms'], ['/404.html', 'Page not found — Bench Bin BOM', 'That page is not in this drawer']]) {
     await page.goto(route);
