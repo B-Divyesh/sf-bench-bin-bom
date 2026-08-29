@@ -399,8 +399,8 @@ test('@claim:unsigned-installers unsigned desktop packages are disclosed before 
   await page.route('https://api.github.com/**', (route) => route.fulfill({
     status:200,
     contentType:'application/json',
-    body:JSON.stringify({ tag_name:'v0.1.2', assets:[
-      { name:'Bench.Bin.BOM_0.1.2.AppImage', browser_download_url:'https://example.test/app.AppImage' }
+    body:JSON.stringify({ tag_name:'v0.1.3', assets:[
+      { name:'Bench.Bin.BOM_0.1.3.AppImage', browser_download_url:'https://example.test/app.AppImage' }
     ] })
   }));
   await page.goto('/');
@@ -416,19 +416,19 @@ test('@claim:release-artifacts release manifest covers every desktop target and 
   const directory = mkdtempSync(resolve(tmpdir(), 'bench-bin-release-'));
   try {
     const names = [
-      'Bench.Bin.BOM_0.1.2_x64_en-US.msi',
-      'Bench.Bin.BOM_0.1.2_amd64.AppImage',
-      'Bench.Bin.BOM_0.1.2_aarch64.dmg',
-      'Bench.Bin.BOM_0.1.2_x64.dmg'
+      'Bench.Bin.BOM_0.1.3_x64_en-US.msi',
+      'Bench.Bin.BOM_0.1.3_amd64.AppImage',
+      'Bench.Bin.BOM_0.1.3_aarch64.dmg',
+      'Bench.Bin.BOM_0.1.3_x64.dmg'
     ];
     names.forEach((name) => writeFileSync(resolve(directory, name), `fixture:${name}`));
-    execFileSync(process.execPath, [resolve(process.cwd(), 'scripts/create-release-manifest.mjs'), directory, 'v0.1.2', 'B-Divyesh/sf-bench-bin-bom']);
+    execFileSync(process.execPath, [resolve(process.cwd(), 'scripts/create-release-manifest.mjs'), directory, 'v0.1.3', 'B-Divyesh/sf-bench-bin-bom']);
     const manifest = JSON.parse(readFileSync(resolve(directory, 'latest.json'), 'utf8'));
-    expect(manifest.version).toBe('0.1.2');
+    expect(manifest.version).toBe('0.1.3');
     expect(Object.keys(manifest.platforms).sort()).toEqual(['linux', 'macos', 'windows']);
     expect(Object.keys(manifest.platforms.macos).sort()).toEqual(['aarch64', 'x64']);
     for (const asset of [manifest.platforms.windows, manifest.platforms.linux, manifest.platforms.macos.aarch64, manifest.platforms.macos.x64]) {
-      expect(asset.url).toMatch(/^https:\/\/github\.com\/B-Divyesh\/sf-bench-bin-bom\/releases\/download\/v0\.1\.2\//);
+      expect(asset.url).toMatch(/^https:\/\/github\.com\/B-Divyesh\/sf-bench-bin-bom\/releases\/download\/v0\.1\.3\//);
       expect(asset.sha256).toMatch(/^[a-f0-9]{64}$/);
     }
     expect(readFileSync(resolve(directory, 'SHA256SUMS'), 'utf8').trim().split('\n')).toHaveLength(names.length);
@@ -618,9 +618,9 @@ test('Intel macOS visitors receive the x64 DMG', async ({ browser }) => {
   const context = await browser.newContext({ userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/122 Safari/537.36' });
   const page = await context.newPage();
   await page.route('https://api.github.com/**', async (route) => {
-    await route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify({ tag_name:'v0.1.2', assets:[
-      { name:'Bench.Bin.BOM_0.1.2_aarch64.dmg', browser_download_url:'https://example.test/aarch64.dmg' },
-      { name:'Bench.Bin.BOM_0.1.2_x64.dmg', browser_download_url:'https://example.test/x64.dmg' },
+    await route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify({ tag_name:'v0.1.3', assets:[
+      { name:'Bench.Bin.BOM_0.1.3_aarch64.dmg', browser_download_url:'https://example.test/aarch64.dmg' },
+      { name:'Bench.Bin.BOM_0.1.3_x64.dmg', browser_download_url:'https://example.test/x64.dmg' },
     ] }) });
   });
   await page.goto('/');

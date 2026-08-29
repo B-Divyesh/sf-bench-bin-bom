@@ -28,7 +28,7 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as on
 | Checking GitHub for the latest release. | 6 |
 | Downloads open on GitHub. | 4 |
 | Compare a project parts list with parts in your drawers. | 10 |
-| Version 0.1.2. | 2 |
+| Version 0.1.3. | 2 |
 | The installer is unsigned. | 4 |
 | Downloads from GitHub. | 3 |
 
