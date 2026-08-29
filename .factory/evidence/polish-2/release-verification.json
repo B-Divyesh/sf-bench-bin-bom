@@ -1,0 +1,21 @@
+{
+  "release": "v0.1.3",
+  "release_url": "https://github.com/B-Divyesh/sf-bench-bin-bom/releases/tag/v0.1.3",
+  "workflow_run": "https://github.com/B-Divyesh/sf-bench-bin-bom/actions/runs/33278132904",
+  "workflow_conclusion": "success",
+  "jobs": {
+    "verify": "success",
+    "macos_x64": "success",
+    "macos_arm64": "success",
+    "linux": "success",
+    "windows": "success",
+    "manifest": "success"
+  },
+  "asset_count": 11,
+  "manifest_version": "0.1.3",
+  "manifest_platforms": ["linux", "macos", "windows"],
+  "downloaded_asset": "Bench.Bin.BOM_0.1.3_x64-setup.exe",
+  "expected_sha256": "32c8785415100151125cf940893ff90701bbf76b77129a38bec15ba989ce54b8",
+  "actual_sha256": "32c8785415100151125cf940893ff90701bbf76b77129a38bec15ba989ce54b8",
+  "verified_at_utc": "2026-08-29T22:22:00Z"
+}

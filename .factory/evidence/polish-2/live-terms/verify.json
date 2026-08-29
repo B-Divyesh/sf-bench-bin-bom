@@ -1,0 +1,14 @@
+{
+  "url": "https://bench-bin-bom.sociobot.in/terms/",
+  "loadMs": 581,
+  "errors": [],
+  "a11y": {
+    "title": "Terms — Bench Bin BOM",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 600
+  }
+}

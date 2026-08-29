@@ -25,6 +25,8 @@ try {
   assert(await page.getByText('Clear boundaries').count() === 0, 'generic boundaries label remains');
   assert((await page.getByRole('link', { name:/secure Sociobot checkout/ }).getAttribute('href'))?.startsWith('https://api.sociobot.in/'), 'checkout is not externally labelled');
   assert((await page.locator('#download').getAttribute('aria-label'))?.includes('GitHub'), 'download is not externally labelled');
+  await page.getByText(/Version 0\.1\.3\./).waitFor();
+  assert((await page.locator('#download').getAttribute('href'))?.includes('/releases/download/v0.1.3/'), 'live download does not use release 0.1.3');
   let axe = await new AxeBuilder({ page }).analyze();
   assert(axe.violations.filter((item) => ['serious','critical'].includes(item.impact || '')).length === 0, 'home has serious axe violations');
 
@@ -91,7 +93,7 @@ try {
   assert(await offlinePage.getByText('Workshop weather node').isVisible(), 'offline sample is missing');
   await offlineContext.close();
 
-  console.log(JSON.stringify({ base, errors:unexpectedErrors, result:'PASS', checks:20 }, null, 2));
+  console.log(JSON.stringify({ base, errors:unexpectedErrors, result:'PASS', checks:21 }, null, 2));
 } finally {
   await browser.close();
 }
