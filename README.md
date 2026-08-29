@@ -8,7 +8,8 @@ There is no analytics or telemetry. CSV import and export keep the stock list
 portable. Each physical part is allocated once across duplicate BOM rows.
 
 Try the isolated sample at <https://bench-bin-bom.sociobot.in/demo/>. It uses
-the separate `demo:bench-bin-bom:v1` storage key and never reads real app data.
+separate demo storage, never reads real app data, and is discarded when you
+select **Start for real**.
 
 ## Price and limits
 
@@ -35,8 +36,9 @@ The browser suite covers desktop, 390 px mobile, keyboard focus, axe,
 privacy, offline reload, response policy, legal routes, demo isolation, and
 every claim in [the claim registry](.factory/claims.json).
 
-The desktop app works without an internet connection after installation. The
-web demo works offline after its first visit.
+The desktop app keeps inventory and pull lists available without a network
+connection. The web demo works offline after its first visit, including nested
+build routes.
 
 ## Package and deploy
 

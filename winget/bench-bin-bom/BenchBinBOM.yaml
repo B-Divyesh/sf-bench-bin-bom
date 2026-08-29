@@ -1,8 +1,0 @@
-PackageIdentifier: Sociobot.BenchBinBOM
-PackageVersion: 0.1.0
-PackageLocale: en-US
-Publisher: Sociobot
-PackageName: Bench Bin BOM
-ShortDescription: Compare a project BOM with your drawer stock.
-ManifestType: defaultLocale
-ManifestVersion: 1.6.0

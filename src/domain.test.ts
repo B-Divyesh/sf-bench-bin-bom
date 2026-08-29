@@ -6,7 +6,7 @@ describe('BOM comparison', () => {
   const parts: Part[] = [{ id:'p', name:'10K RESISTOR', value:'1/4w', quantity:6, bin:'A1', note:'' }];
 
   it('matches names and values without case sensitivity', () => {
-    expect(statusFor(parts, line)).toEqual({ stocked:6, shortage:2, ready:false });
+    expect(statusFor(parts, line)).toEqual({ stocked:6, shortage:2, ready:false, pulls:[{ bin:'A1', quantity:6 }] });
   });
 
   it('allocates shared stock once across duplicate BOM rows', () => {
@@ -16,9 +16,18 @@ describe('BOM comparison', () => {
       { id:'rear', part:'M3 screw', value:'8 mm', needed:6, substitute:'', note:'' },
     ];
     expect(allocateBom(stock, lines)).toEqual([
-      { stocked:6, shortage:0, ready:true },
-      { stocked:4, shortage:2, ready:false },
+      { stocked:6, shortage:0, ready:true, pulls:[{ bin:'C4', quantity:6 }] },
+      { stocked:4, shortage:2, ready:false, pulls:[{ bin:'C4', quantity:4 }] },
     ]);
+  });
+
+  it('keeps each allocated quantity paired with its bin location', () => {
+    const stock: Part[] = [
+      { id:'a1', name:'LED', value:'red', quantity:2, bin:'A1', note:'' },
+      { id:'a2', name:'LED', value:'red', quantity:4, bin:'A2', note:'' },
+    ];
+    const [status] = allocateBom(stock, [{ id:'leds', part:'LED', value:'red', needed:5, substitute:'', note:'' }]);
+    expect(status.pulls).toEqual([{ bin:'A1', quantity:2 }, { bin:'A2', quantity:3 }]);
   });
 });
 

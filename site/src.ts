@@ -10,13 +10,14 @@ const releasePage = 'https://github.com/B-Divyesh/sf-bench-bin-bom/releases';
 const button = document.querySelector<HTMLAnchorElement>('#download')!;
 const note = document.querySelector<HTMLElement>('#download-note')!;
 const platform = navigator.userAgent.includes('Windows') ? 'windows' : navigator.userAgent.includes('Mac') ? 'macos' : 'linux';
+const macArchitecture = /(?:Intel Mac|x86_64|x64)/i.test(navigator.userAgent) ? 'x64' : /(?:aarch64|arm64|arm)/i.test(navigator.userAgent) ? 'aarch64' : 'x64';
 
 function readCache(): CachedRelease | null {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); }
   catch { return null; }
 }
 function showRelease(release: Release) {
-  const needle = platform === 'windows' ? '.msi' : platform === 'macos' ? '.dmg' : '.appimage';
+  const needle = platform === 'windows' ? '.msi' : platform === 'macos' ? `${macArchitecture}.dmg` : '.appimage';
   const asset = release.assets?.find((item) => item.name.toLowerCase().includes(needle));
   if (!asset) return false;
   button.href = asset.browser_download_url;

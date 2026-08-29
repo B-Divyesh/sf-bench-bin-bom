@@ -1,8 +1,0 @@
-{
-  "version": "0.1.0",
-  "description": "Compare a build BOM with your local bench stock.",
-  "homepage": "https://bench-bin-bom.sociobot.in",
-  "url": "https://github.com/B-Divyesh/sf-bench-bin-bom/releases/download/v0.1.0/Bench.Bin.BOM_0.1.0_x64_en-US.msi",
-  "hash": "REPLACE_WITH_RELEASE_SHA256",
-  "installer": { "script": ["Start-Process msiexec.exe -Wait -ArgumentList '/i `"$dir\\$fname`" /qn'" ] }
-}

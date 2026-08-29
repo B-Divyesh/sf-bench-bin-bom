@@ -11,7 +11,7 @@ button,input,textarea { font:inherit; }
 button,.link-button { min-height:44px; border:2px solid var(--ink); border-radius:3px; padding:9px 15px; cursor:pointer; font-weight:700; color:var(--ink); background:var(--paper); }
 button:hover,.link-button:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--ink); }
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible { outline:3px solid var(--orange); outline-offset:3px; }
-.skip { position:absolute; left:-999px; top:8px; z-index:10; background:var(--paper); padding:8px; }
+.skip { position:absolute; left:-999px; top:8px; z-index:10; min-width:44px; min-height:44px; display:inline-flex; align-items:center; background:var(--paper); padding:8px; }
 .skip:focus { left:8px; }
 .demo-banner { background:#f6e9cc; border-bottom:2px solid var(--ink); display:flex; align-items:center; justify-content:center; gap:16px; padding:8px 16px; }
 .demo-banner span { color:var(--muted); }
@@ -50,6 +50,8 @@ p { max-width:64ch; }
 .parts,.bom ul { padding:0; margin:20px 0 0; list-style:none; }
 .part-row { display:grid; grid-template-columns:56px 1fr 100px 150px auto; align-items:center; gap:16px; border-top:1px solid var(--line); padding:12px 0; }
 .part-row span,.bom-row span,.readiness span { display:block; color:var(--muted); font-size:13px; }
+.bom-row .pull-locations { margin-top:4px; color:var(--ink); }
+.bom-row .pull-locations b { font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
 .part-photo { width:48px; height:48px; background:var(--ink); color:var(--ochre); display:grid; place-items:center; overflow:hidden; }
 .part-photo img { width:100%; height:100%; object-fit:cover; }
 .number { font-variant-numeric:tabular-nums; }
@@ -83,7 +85,7 @@ p { max-width:64ch; }
 .app-footer { background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px max(24px,calc((100vw - 1200px)/2)); font-size:13px; }
 .app-footer p { margin:0; }
 .app-footer nav { display:flex; gap:12px; }
-.app-footer a { color:var(--paper); min-height:44px; display:inline-flex; align-items:center; }
+.app-footer a { color:var(--paper); min-width:44px; min-height:44px; display:inline-flex; align-items:center; }
 dialog { border:3px solid var(--ink); background:var(--paper); box-shadow:8px 8px 0 var(--ink); max-width:560px; width:calc(100% - 32px); padding:0; }
 dialog::backdrop { background:#172a3aaa; }
 .sheet form { padding:24px; }

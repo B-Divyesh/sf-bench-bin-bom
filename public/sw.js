@@ -1,4 +1,4 @@
-const CACHE = 'bench-bin-bom-shell-v0.1.1';
+const CACHE = 'bench-bin-bom-shell-v0.1.2';
 const DOCUMENTS = ['/', '/demo/', '/privacy/', '/terms/', '/404.html', '/assets/bench-diorama-v1.webp', '/favicon.svg'];
 
 async function fetchFresh(url) {
@@ -44,7 +44,11 @@ self.addEventListener('fetch', (event) => {
       if (response.ok) await (await caches.open(CACHE)).put(event.request, response.clone());
       return response;
     } catch {
-      if (event.request.mode === 'navigate') return (await caches.match('/404.html'));
+      if (event.request.mode === 'navigate') {
+        const path = new URL(event.request.url).pathname;
+        if (path === '/demo' || path.startsWith('/demo/')) return (await caches.match('/demo/'));
+        return (await caches.match('/404.html'));
+      }
       return new Response('Offline resource unavailable', { status:503, headers:{ 'Content-Type':'text/plain' } });
     }
   })());

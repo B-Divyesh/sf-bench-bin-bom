@@ -1,7 +1,7 @@
 import './style.css';
 import { AppState, BomLine, Part, Project, allocateBom, makeId, parseBom, parseParts, partsCsv, sampleState } from './domain';
 import { download, isDemoMode, loadState, resetDemo, saveState } from './storage';
-import { captureLicense, hasLicense, restoreLicense, verifyLicense } from './license';
+import { captureLicense, clearDemoLicense, hasLicense, restoreLicense, verifyLicense } from './license';
 
 declare const __BUILD_ID__: string;
 const PHOTO_LIMIT = 2 * 1024 * 1024;
@@ -85,10 +85,11 @@ function build(project: Project) {
   const statuses = allocateBom(state.parts, project.bom);
   const lines = project.bom.map((line, index) => {
     const result = statuses[index];
-    return `<li class="bom-row ${result.ready ? 'ready' : 'short'}"><div class="status-symbol" aria-label="${result.ready ? 'Ready' : 'Short'}">${result.ready ? '✓' : '!'}</div><div><strong>${esc(line.part)}</strong><span>${esc(line.value || 'Value not specified')}${line.note ? ` · ${esc(line.note)}` : ''}</span>${line.substitute ? `<small>Substitute: ${esc(line.substitute)} — review electrical fit yourself.</small>` : ''}</div><div class="number"><b>${line.needed}</b><span>needed</span></div><div class="number"><b>${result.stocked}</b><span>allocated</span></div><div><b>${result.ready ? 'Ready' : `${result.shortage} short`}</b></div><button class="quiet" data-edit-line="${line.id}">Edit</button></li>`;
+    const pullLocations = result.pulls.length ? result.pulls.map((pull) => `${pull.quantity} from ${esc(pull.bin)}`).join(' · ') : 'No matching stock location';
+    return `<li class="bom-row ${result.ready ? 'ready' : 'short'}"><div class="status-symbol" aria-label="${result.ready ? 'Ready' : 'Short'}">${result.ready ? '✓' : '!'}</div><div><strong>${esc(line.part)}</strong><span>${esc(line.value || 'Value not specified')}${line.note ? ` · ${esc(line.note)}` : ''}</span><span class="pull-locations"><b>Pull:</b> ${pullLocations}</span>${line.substitute ? `<small>Substitute: ${esc(line.substitute)} — review electrical fit yourself.</small>` : ''}</div><div class="number"><b>${line.needed}</b><span>needed</span></div><div class="number"><b>${result.stocked}</b><span>allocated</span></div><div><b>${result.ready ? 'Ready' : `${result.shortage} short`}</b></div><button class="quiet" data-edit-line="${line.id}">Edit</button></li>`;
   }).join('');
   const short = statuses.filter((status) => !status.ready).length;
-  return appShell(`<section class="build-head"><div><a class="back" href="${routePath('projects')}" data-route="projects">← All builds</a><p class="eyebrow">Project pull card</p><h1>${esc(project.name)}</h1><p>${esc(project.notes || 'No project note yet.')}</p></div><div class="readiness ${short ? 'short' : 'ready'}"><b>${short ? `${short} line${short === 1 ? '' : 's'} to source` : 'Ready to pull'}</b><span>${short ? 'Review shortages before starting.' : 'Everything is recorded on the bench.'}</span></div></section><section class="pull-actions"><button class="primary" data-action="new-line">Add BOM line</button><button class="secondary" data-action="import-bom">Paste or import BOM</button><button class="secondary" data-action="print">Print pull list</button><button class="quiet" data-action="edit-project">Edit build</button></section><section class="panel bom"><div class="table-labels" aria-hidden="true"><span></span><span>Part</span><span>Need</span><span>Allocated</span><span>Status</span><span></span></div><ul>${lines || '<li class="empty"><h2>No BOM lines</h2><p>Add parts or paste CSV to check this build.</p><button class="primary" data-action="import-bom">Paste BOM</button></li>'}</ul></section><aside class="safety-note"><b>Substitutes need your review.</b> Check ratings, pinouts, and fit before use.</aside>`);
+  return appShell(`<section class="build-head"><div><a class="back" href="${routePath('projects')}" data-route="projects">← All builds</a><p class="eyebrow">Project pull card</p><h1>${esc(project.name)}</h1><p>${esc(project.notes || 'No project note yet.')}</p></div><div class="readiness ${short ? 'short' : 'ready'}"><b>${short ? `${short} line${short === 1 ? '' : 's'} to source` : 'Ready to pull'}</b><span>${short ? 'Review shortages before starting.' : 'Everything is recorded on the bench.'}</span></div></section><section class="pull-actions"><button class="primary" data-action="new-line">Add BOM line</button><button class="secondary" data-action="import-bom">Paste or import BOM</button><button class="secondary" data-action="print">Print pull list</button><button class="quiet" data-action="edit-project">Edit build</button></section><section class="panel bom"><div class="table-labels" aria-hidden="true"><span></span><span>Part and pull location</span><span>Need</span><span>Allocated</span><span>Status</span><span></span></div><ul>${lines || '<li class="empty"><h2>No BOM lines</h2><p>Add parts or paste CSV to check this build.</p><button class="primary" data-action="import-bom">Paste BOM</button></li>'}</ul></section><aside class="safety-note"><b>Substitutes need your review.</b> Check ratings, pinouts, and fit before use.</aside>`);
 }
 function about() {
   return appShell(`<section class="page-heading"><p class="eyebrow">Local desktop tool</p><h1>About Bench Bin BOM</h1><p>Bench Bin BOM stores your inventory and projects on this device.</p></section><section class="panel prose"><h2>Bench Pass costs $12 once</h2><p>The free app records up to 40 stock parts and two builds. Bench Pass removes those limits. CSV export, accessibility, and safety notes stay free.</p><a class="primary link-button" href="https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout">Buy Bench Pass for $12</a><p>${hasLicense() ? 'A verified Bench Pass is active on this device.' : 'Already bought Bench Pass?'} <button class="inline" data-action="restore-license">Paste a license</button></p><p>The app checks a saved license at most once each day when online.</p></section>`);
@@ -142,7 +143,9 @@ function partDialog(part?: Part) {
       reader.readAsDataURL(file);
     }).catch((problem: Error) => { error!.textContent = problem.message; return undefined; });
     if (file?.size && !photo) return;
-    const nextPart: Part = { ...item, name:String(form.get('name')).trim(), value:String(form.get('value')).trim(), quantity:Number(form.get('quantity')), bin:String(form.get('bin')).trim(), note:String(form.get('note')).trim(), photo };
+    const name = String(form.get('name')).trim();
+    if (!name) { error!.textContent = 'Add a part name before saving.'; return; }
+    const nextPart: Part = { ...item, name, value:String(form.get('value')).trim(), quantity:Number(form.get('quantity')), bin:String(form.get('bin')).trim(), note:String(form.get('note')).trim(), photo };
     const next = { ...state, parts: part ? state.parts.map((current) => current.id === item.id ? nextPart : current) : [...state.parts, nextPart] };
     if (commit(next, error)) { dialog.close(); render(); }
   });
@@ -156,15 +159,26 @@ function partDialog(part?: Part) {
 }
 function projectDialog(project?: Project) {
   const item = project || { id: makeId(), name:'', notes:'', bom:[], updatedAt:new Date().toISOString() };
-  const dialog = openDialog(modal(project ? 'Edit build' : 'Start a build', `<label>Build name<input required name="name" value="${esc(item.name)}" placeholder="Garage sensor"></label><label>Build note<textarea name="notes" rows="3" placeholder="What is this for?">${esc(item.notes)}</textarea></label><p class="error" aria-live="polite"></p><footer><button class="secondary" type="button" data-cancel>Cancel</button><button class="primary" type="submit">${project ? 'Save build' : 'Create pull card'}</button></footer>`));
+  const dialog = openDialog(modal(project ? 'Edit build' : 'Start a build', `<label>Build name<input required name="name" value="${esc(item.name)}" placeholder="Garage sensor"></label><label>Build note<textarea name="notes" rows="3" placeholder="What is this for?">${esc(item.notes)}</textarea></label><p class="error" aria-live="polite"></p><footer><button class="secondary" type="button" data-cancel>Cancel</button>${project ? '<button class="danger" type="button" data-delete-project>Remove build</button>' : ''}<button class="primary" type="submit">${project ? 'Save build' : 'Create pull card'}</button></footer>`));
   dialog.addEventListener('submit', (event) => {
     event.preventDefault();
     const error = dialog.querySelector('.error');
     if (!project && !canAdd('project')) { error!.textContent = 'The free bench includes two builds. Bench Pass removes this limit.'; return; }
     const form = new FormData(event.target as HTMLFormElement);
-    const nextProject = { ...item, name:String(form.get('name')).trim(), notes:String(form.get('notes')).trim(), updatedAt:new Date().toISOString() };
+    const name = String(form.get('name')).trim();
+    if (!name) { error!.textContent = 'Add a build name before saving.'; return; }
+    const nextProject = { ...item, name, notes:String(form.get('notes')).trim(), updatedAt:new Date().toISOString() };
     const next = { ...state, projects: project ? state.projects.map((current) => current.id === item.id ? nextProject : current) : [...state.projects, nextProject], activeProjectId: nextProject.id };
     if (commit(next, error)) { dialog.close(); navigate(`build/${nextProject.id}`); }
+  });
+  dialog.querySelector('[data-delete-project]')?.addEventListener('click', () => {
+    if (!window.confirm(`Remove “${item.name}” and its ${item.bom.length} BOM line${item.bom.length === 1 ? '' : 's'}?`)) return;
+    const next = { ...state, projects: state.projects.filter((current) => current.id !== item.id), activeProjectId: state.activeProjectId === item.id ? undefined : state.activeProjectId };
+    if (!commit(next, dialog.querySelector('.error'))) return;
+    notice = `${item.name} removed.`;
+    undo = () => { commit({ ...state, projects:[...state.projects, item], activeProjectId:item.id }); };
+    dialog.close();
+    navigate('projects');
   });
 }
 function bomDialog(line?: BomLine) {
@@ -175,7 +189,9 @@ function bomDialog(line?: BomLine) {
   dialog.addEventListener('submit', (event) => {
     event.preventDefault();
     const form = new FormData(event.target as HTMLFormElement);
-    const nextLine: BomLine = { id:item.id, part:String(form.get('part')).trim(), value:String(form.get('value')).trim(), needed:Number(form.get('needed')), substitute:String(form.get('substitute')).trim(), note:String(form.get('note')).trim() };
+    const partName = String(form.get('part')).trim();
+    if (!partName) { dialog.querySelector('.error')!.textContent = 'Add a part name before saving.'; return; }
+    const nextLine: BomLine = { id:item.id, part:partName, value:String(form.get('value')).trim(), needed:Number(form.get('needed')), substitute:String(form.get('substitute')).trim(), note:String(form.get('note')).trim() };
     const nextProject = { ...project, bom: line ? project.bom.map((current) => current.id === item.id ? nextLine : current) : [...project.bom, nextLine], updatedAt:new Date().toISOString() };
     if (commit(withProject(nextProject), dialog.querySelector('.error'))) { dialog.close(); render(); }
   });
@@ -224,8 +240,10 @@ function bind() {
     if (location.protocol.startsWith('http')) location.assign('/demo/');
     else location.assign('/?demo=1');
   });
-  root.querySelector('[data-action="reset-demo"]')?.addEventListener('click', () => { state = resetDemo(); notice = 'Demo reset to the original sample.'; render(); });
+  root.querySelector('[data-action="reset-demo"]')?.addEventListener('click', () => { state = resetDemo(); clearDemoLicense(); notice = 'Demo reset to the original sample.'; render(); });
   root.querySelector('[data-action="start-real"]')?.addEventListener('click', () => {
+    resetDemo();
+    clearDemoLicense();
     if (location.protocol.startsWith('http')) location.assign('/');
     else location.assign('/');
   });

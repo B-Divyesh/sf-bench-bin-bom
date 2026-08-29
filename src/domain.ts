@@ -2,7 +2,8 @@ export type Part = { id: string; name: string; value: string; quantity: number; 
 export type BomLine = { id: string; part: string; value: string; needed: number; substitute: string; note: string };
 export type Project = { id: string; name: string; notes: string; bom: BomLine[]; updatedAt: string };
 export type AppState = { parts: Part[]; projects: Project[]; activeProjectId?: string };
-export type LineStatus = { stocked: number; shortage: number; ready: boolean };
+export type Pull = { bin: string; quantity: number };
+export type LineStatus = { stocked: number; shortage: number; ready: boolean; pulls: Pull[] };
 
 export const blankState = (): AppState => ({ parts: [], projects: [], activeProjectId: undefined });
 export const makeId = () => crypto.randomUUID();
@@ -17,15 +18,17 @@ export function allocateBom(parts: Part[], lines: BomLine[]): LineStatus[] {
   const remaining = new Map(parts.map((part) => [part.id, part.quantity]));
   return lines.map((line) => {
     let stocked = 0;
+    const pulls: Pull[] = [];
     for (const part of parts) {
       if (!matchesPart(part, line) || stocked >= line.needed) continue;
       const available = remaining.get(part.id) ?? 0;
       const used = Math.min(available, line.needed - stocked);
       stocked += used;
       remaining.set(part.id, available - used);
+      if (used) pulls.push({ bin: part.bin || 'Unbinned', quantity: used });
     }
     const shortage = Math.max(0, line.needed - stocked);
-    return { stocked, shortage, ready: shortage === 0 };
+    return { stocked, shortage, ready: shortage === 0, pulls };
   });
 }
 

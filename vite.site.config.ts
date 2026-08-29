@@ -1,14 +1,19 @@
 import { defineConfig } from 'vite';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const here = dirname(fileURLToPath(import.meta.url));
+const buildId = process.env.GITHUB_SHA?.slice(0, 8) || process.env.VITE_BUILD_ID || (() => {
+  try { return execFileSync('git', ['rev-parse', '--short=8', 'HEAD'], { encoding:'utf8' }).trim(); }
+  catch { return 'source'; }
+})();
 
 export default defineConfig({
   root: 'site',
   publicDir: resolve(here, 'public'),
   define: {
-    __BUILD_ID__: JSON.stringify(process.env.GITHUB_SHA?.slice(0, 8) || process.env.VITE_BUILD_ID || 'local')
+    __BUILD_ID__: JSON.stringify(buildId)
   },
   build: {
     target: 'es2022',

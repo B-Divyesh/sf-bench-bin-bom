@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { licenseStorage, hasLicense, restoreLicense, verifyLicense } from './license';
+import { clearDemoLicense, licenseStorage, hasLicense, restoreLicense, verifyLicense } from './license';
 import { DEMO_STORAGE_KEY, REAL_STORAGE_KEY, loadState, saveState } from './storage';
 
 class MemoryStorage {
@@ -28,6 +28,14 @@ describe('storage boundaries', () => {
     expect(storage.getItem(REAL_STORAGE_KEY)).toContain('Private part');
   });
 
+  it('keeps demo licenses separate and discards them with the demo', () => {
+    restoreLicense('demo-only-token');
+    expect(storage.getItem(licenseStorage.demoToken)).toBe('demo-only-token');
+    expect(storage.getItem(licenseStorage.token)).toBeNull();
+    clearDemoLicense();
+    expect(storage.getItem(licenseStorage.demoToken)).toBeNull();
+  });
+
   it('turns a storage quota failure into a recovery message', () => {
     storage.setItem = () => { throw new DOMException('full', 'QuotaExceededError'); };
     expect(() => saveState({ parts:[], projects:[] })).toThrow('Remove a photo or export your CSV');
@@ -39,6 +47,7 @@ describe('license trust', () => {
   beforeEach(() => {
     storage = new MemoryStorage();
     vi.stubGlobal('localStorage', storage);
+    vi.stubGlobal('location', { pathname:'/', search:'', href:'http://localhost/' });
   });
 
   it('does not unlock a newly entered token when verification is unreachable', async () => {
@@ -58,4 +67,3 @@ describe('license trust', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 });
-
