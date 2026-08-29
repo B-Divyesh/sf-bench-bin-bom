@@ -33,7 +33,6 @@ h2 { font-size:clamp(1.8rem,3vw,2.7rem); margin:0 0 12px; }
 .facts li { margin:5px 0; }
 figure { margin:0; background:#294354; border:9px solid var(--ink); box-shadow:8px 10px 0 var(--ink); }
 figure img { display:block; width:100%; height:auto; }
-figcaption { padding:7px 10px; color:var(--paper); background:var(--ink); font-size:13px; }
 .product-preview,.limits,.download-section { margin:88px 0 0; border-block:2px solid var(--ink); padding:30px 0; display:flex; justify-content:space-between; align-items:center; gap:32px; }
 .product-preview p,.limits p,.download-section p { max-width:58ch; }
 .walkthrough { margin:88px 0; }
@@ -59,12 +58,18 @@ footer>span:first-child { max-width:32ch; }
 .not-found h1 { margin-inline:auto; }
 .not-found .primary { margin-top:18px; }
 @media(max-width:760px) {
-  header { align-items:flex-start; flex-direction:column; gap:0; padding:8px 16px; }
-  header nav { width:100%; overflow-x:auto; flex-wrap:nowrap; }
-  header nav a { flex:0 0 auto; }
-  main { padding:32px 16px 50px; }
+  header { align-items:flex-start; flex-direction:column; gap:0; padding:6px 16px; }
+  header nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:100%; gap:0; }
+  header nav a { justify-content:center; min-width:0; padding:5px 4px; font-size:13px; text-align:center; }
+  main { padding:22px 16px 50px; }
   .hero { grid-template-columns:1fr; gap:32px; }
-  .hero-actions { align-items:flex-start; flex-direction:column; }
+  .hero h1 { font-size:clamp(2.25rem,11vw,3rem); max-width:10ch; }
+  .hero .lede { margin:12px 0; font-size:17px; line-height:1.4; }
+  .hero-actions { align-items:flex-start; flex-direction:column; gap:6px; margin:16px 0 12px; }
+  .hero-actions .primary { flex:0 0 auto; padding-inline:12px; }
+  .hero-actions span { max-width:none; font-size:12px; line-height:1.35; }
+  .facts { font-size:14px; line-height:1.35; }
+  .facts li { margin:3px 0; }
   .walkthrough ol { grid-template-columns:1fr; }
   .product-preview,.limits,.download-section,.buy { align-items:flex-start; flex-direction:column; }
   .buy { padding:24px; }

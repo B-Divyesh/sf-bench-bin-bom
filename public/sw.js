@@ -1,4 +1,4 @@
-const CACHE = 'bench-bin-bom-shell-v0.1.3';
+const CACHE = 'bench-bin-bom-shell-polish-1';
 const DOCUMENTS = ['/', '/demo/', '/privacy/', '/terms/', '/404.html', '/assets/bench-diorama-v1.webp', '/favicon.svg'];
 
 async function fetchFresh(url) {

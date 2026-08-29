@@ -20,11 +20,11 @@ function fortyParts() {
 
 test('cold first screen names the job, audience, next step, and exact price', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level:1 })).toHaveText('Check your parts before you start building');
+  await expect(page.getByRole('heading', { level:1 })).toHaveText('Check your parts before building');
   await expect(page.getByText(/makers and homelab builders/)).toBeVisible();
-  await expect(page.getByRole('link', { name:'Try it with sample data' })).toHaveAttribute('href', '/demo/');
-  await expect(page.getByText(/Opens a sample bench and pull list/)).toBeVisible();
-  await expect(page.getByText(/Bench Pass costs \$12 once/)).toBeVisible();
+  await expect(page.getByRole('link', { name:'Try it with sample data' })).toHaveAttribute('href', '/demo/?demo=1');
+  await expect(page.getByText(/Opens an isolated sample bench and pull list/)).toBeVisible();
+  await expect(page.getByText(/Bench Pass: \$12 once/)).toBeVisible();
 });
 
 test('@claim:sample-demo sample data is one click away, isolated, and discarded on exit', async ({ page }) => {
@@ -32,7 +32,7 @@ test('@claim:sample-demo sample data is one click away, isolated, and discarded 
   await page.goto('/');
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ parts:[{ name:'Private part' }], projects:[] })), REAL_KEY);
   await page.getByRole('link', { name:'Try it with sample data' }).click();
-  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page).toHaveURL(/\/demo\/\?demo=1$/);
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
   await expect(page.getByText('ESP32 DevKit')).toBeVisible();
   await expect(page.getByText('Private part')).toHaveCount(0);
@@ -65,6 +65,52 @@ test('@claim:sample-demo sample data is one click away, isolated, and discarded 
   expect(await page.evaluate((key) => localStorage.getItem(key), DEMO_TOKEN_KEY)).toBeNull();
   await page.goto('/demo/');
   await expect(page.getByText('Explicit exit probe')).toHaveCount(0);
+});
+
+test('@claim:sample-content the isolated demo has exactly three stock records and four BOM rows', async ({ page }) => {
+  await page.goto('/demo/?demo=1');
+  await expect(page.locator('.part-row')).toHaveCount(3);
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  await expect(page.locator('.bom-row')).toHaveCount(4);
+});
+
+test('@claim:record-bin-locations a saved bin appears in stock and in its pull instruction', async ({ page }) => {
+  await page.goto('/demo/?demo=1');
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Panel jack');
+  await page.getByLabel('Value or variant').fill('PJ-301M');
+  await page.getByLabel('Quantity on hand').fill('2');
+  await page.getByLabel('Bin location').fill('D7');
+  await page.getByRole('button', { name:'Save part' }).click();
+  const part = page.locator('.part-row').filter({ hasText:'Panel jack' });
+  await expect(part).toContainText('D7');
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  await page.getByRole('button', { name:'Add BOM line' }).click();
+  await page.getByLabel('Part name').fill('Panel jack');
+  await page.getByLabel('Value or variant').fill('PJ-301M');
+  await page.getByLabel('Quantity needed').fill('2');
+  await page.getByRole('button', { name:'Save line' }).click();
+  await expect(page.locator('.bom-row').filter({ hasText:'Panel jack' })).toContainText('Pull: 2 from D7');
+});
+
+test('@claim:bom-entry-notes pasted BOM substitute notes persist beside the saved line', async ({ page, context }) => {
+  await page.goto('/demo/?demo=1');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  await page.getByRole('button', { name:'Paste or import BOM' }).click();
+  await page.getByRole('textbox', { name:'CSV' }).fill('JST lead,2-pin,1,"Dupont lead; check pin order",sensor cable');
+  await page.getByRole('button', { name:'Import rows' }).click();
+  const line = page.locator('.bom-row').filter({ hasText:'JST lead' });
+  await expect(line).toContainText('sensor cable');
+  await expect(line).toContainText('Substitute: Dupont lead; check pin order');
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('.bom-row').filter({ hasText:'JST lead' })).toContainText('Substitute: Dupont lead; check pin order');
+  await context.setOffline(false);
 });
 
 test('@claim:bom-allocation duplicate BOM rows allocate stock only once', async ({ page }) => {
@@ -397,6 +443,23 @@ test('desktop landing, keyboard focus, reduced motion, and text resize pass', as
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 
+test('390 px landing keeps complete navigation and all first-screen facts in view', async ({ page }) => {
+  await page.setViewportSize({ width:390, height:844 });
+  await page.goto('/');
+  const navigation = page.getByRole('navigation', { name:'Main navigation' });
+  for (const name of ['Demo', 'Steps', 'Install', 'Privacy']) {
+    const box = await navigation.getByRole('link', { name, exact:true }).boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+  }
+  const price = await page.getByText(/Bench Pass: \$12 once/).boundingBox();
+  expect(price).not.toBeNull();
+  expect(price!.y + price!.height).toBeLessThanOrEqual(844);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+});
+
 test('legal, metadata, clean artifact, and response policy files are complete', async ({ page }) => {
   for (const [route, title, heading] of [['/privacy/', 'Privacy — Bench Bin BOM', 'Privacy'], ['/terms/', 'Terms — Bench Bin BOM', 'Terms'], ['/404.html', 'Page not found — Bench Bin BOM', 'That page is not in this drawer']]) {
     await page.goto(route);
@@ -427,6 +490,32 @@ test('all public routes load with one H1 and no browser errors', async ({ page }
     expect(await page.title()).not.toBe('');
   }
   expect(errors).toEqual([]);
+});
+
+test('public navigation, legal links, titles, focus, and 404 remain real routes', async ({ page, request }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle('Bench Bin BOM — check parts before building');
+  await expect(page.getByRole('link', { name:'View source on GitHub (opens external site)' })).toHaveAttribute('href', /^https:\/\/github\.com\//);
+  for (const [route, title] of [['/privacy/', 'Privacy — Bench Bin BOM'], ['/terms/', 'Terms — Bench Bin BOM']]) {
+    const response = await request.get(route);
+    expect(response.status()).toBe(200);
+    await page.goto(route);
+    await expect(page).toHaveTitle(title);
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('main')).toHaveCount(1);
+    await expect(page.getByRole('link', { name:'Privacy', exact:true }).first()).toHaveAttribute('href', '/privacy/');
+    await expect(page.getByRole('link', { name:'Terms', exact:true }).last()).toHaveAttribute('href', '/terms/');
+  }
+  await page.goto('/404.html');
+  await expect(page).toHaveTitle('Page not found — Bench Bin BOM');
+  await expect(page.getByRole('heading', { level:1 })).toHaveText('That page is not in this drawer');
+  const config = JSON.parse(readFileSync(resolve(process.cwd(), 'dist/site/staticwebapp.config.json'), 'utf8'));
+  expect(config.responseOverrides['404'].rewrite).toBe('/404.html');
+  await page.goto('/demo/?demo=1');
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await expect(page.getByRole('heading', { level:1 })).toBeFocused();
+  await page.goBack();
+  await expect(page.getByRole('heading', { level:1 })).toBeFocused();
 });
 
 test('@claim:release-cache landing release lookup uses its one-hour cache and calm fallback', async ({ page }) => {
