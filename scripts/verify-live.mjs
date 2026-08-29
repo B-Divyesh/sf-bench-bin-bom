@@ -27,8 +27,8 @@ try {
   assert(await page.getByText('Checkout opens on an external site.').count() === 1, 'checkout disclosure is missing');
   assert(await page.getByText('Your operating system may ask you to confirm it.').count() === 0, 'unsupported installer prediction remains');
   assert((await page.locator('#download').getAttribute('aria-label'))?.includes('GitHub'), 'download is not externally labelled');
-  await page.getByText(/Version 0\.1\.3\./).waitFor();
-  assert((await page.locator('#download').getAttribute('href'))?.includes('/releases/download/v0.1.3/'), 'live download does not use release 0.1.3');
+  await page.getByText(/Version 0\.1\.4\./).waitFor();
+  assert((await page.locator('#download').getAttribute('href'))?.includes('/releases/download/v0.1.4/'), 'live download does not use release 0.1.4');
   let axe = await new AxeBuilder({ page }).analyze();
   assert(axe.violations.filter((item) => ['serious','critical'].includes(item.impact || '')).length === 0, 'home has serious axe violations');
   await page.screenshot({ path:`${evidence}live-home-390.png`, fullPage:true });

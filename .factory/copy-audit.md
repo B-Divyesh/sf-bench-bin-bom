@@ -1,4 +1,4 @@
-# Copy audit — polish round 2
+# Copy audit — polish round 3
 
 Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as one word. No sentence exceeds 22 words. No banned marketing word appears. Headings, actions, and navigation labels name their destination or result.
 
@@ -27,7 +27,7 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as on
 | Checking GitHub for the latest release. | 6 |
 | Downloads open on GitHub. | 4 |
 | Compare a project parts list with parts in your drawers. | 10 |
-| Version 0.1.3. | 2 |
+| Version 0.1.4. | 2 |
 | The installer is unsigned. | 4 |
 | Downloads from GitHub. | 3 |
 
@@ -53,7 +53,7 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as on
 | Run the browser checks with npm run test:e2e. | 8 |
 | The desktop app keeps inventory and pull lists available without a network connection. | 13 |
 | The web demo works offline after its first visit, including nested build routes. | 13 |
-| Push a version tag such as v0.1.3 to build installers for macOS, Windows, and Linux. | 16 |
+| Push a version tag such as v0.1.4 to build installers for macOS, Windows, and Linux. | 16 |
 | The release also publishes SHA256SUMS and latest.json. | 8 |
 | Installers are unsigned. | 3 |
 | The landing page checks GitHub for the latest release and keeps that result for one hour. | 16 |
