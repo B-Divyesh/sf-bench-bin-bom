@@ -1,4 +1,29 @@
-# Handoff — Bench Bin BOM polish round 2
+# Handoff — Bench Bin BOM
+
+## Independent verification 6
+
+**PASS — candidate `735ffeaa6ec51743541543bb4adadd9530d86afe` is accepted.**
+
+Verified 2026-08-29 at <https://bench-bin-bom.sociobot.in>; the live footer
+reports build `735ffeaa`, and freshly built candidate JS/CSS assets matched
+the deployed assets byte-for-byte. See `.factory/verification-6.md` for exact
+commands and evidence.
+
+- All 23 demo-entry claim tests passed; the full suite passed 35/35 and unit
+  tests passed 12/12.
+- Type checks, desktop and site production builds, Rust check, and a
+  production-equivalent Linux Tauri DEB build passed.
+- Independent live workflow, mobile 390 px, keyboard/focus, reduced motion,
+  offline nested reload, print layout, axe, console/page errors, privacy
+  requests, headers/caching, rate limiting, and release artifacts passed.
+- License verification allowance observed: 30 requests per burst; request 31
+  returned 429 with `Retry-After: 3`.
+- No release-blocking defects or known product gaps found.
+
+The only local-environment note: bare Tauri packaging rejects this container's
+`CI=1`; `CI=true` (the GitHub Actions production value) completes successfully.
+
+---
 
 ## Outcome
 
