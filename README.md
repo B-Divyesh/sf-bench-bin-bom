@@ -9,7 +9,7 @@ portable. Each physical part is allocated once across duplicate BOM rows.
 
 Try the isolated sample at <https://bench-bin-bom.sociobot.in/demo/>. It uses
 separate demo storage, never reads real app data, and is discarded when you
-select **Start for real**.
+leave by browser navigation, tab close, or **Start for real**.
 
 ## Price and limits
 

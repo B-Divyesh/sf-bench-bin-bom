@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from 'playwright/test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 const DEMO_KEY = 'demo:bench-bin-bom:v1';
@@ -40,6 +42,15 @@ test('@claim:sample-demo sample data is one click away, isolated, and discarded 
   await page.getByRole('button', { name:'Add a part' }).click();
   await page.getByLabel('Part name').fill('Demo persistence probe');
   await page.getByRole('button', { name:'Save part' }).click();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  expect(await page.evaluate((key) => localStorage.getItem(key), DEMO_KEY)).toBeNull();
+  expect(await page.evaluate((key) => localStorage.getItem(key), REAL_KEY)).toContain('Private part');
+  await page.getByRole('link', { name:'Try it with sample data' }).click();
+  await expect(page.getByText('Demo persistence probe')).toHaveCount(0);
+  await page.getByRole('button', { name:'Add a part' }).click();
+  await page.getByLabel('Part name').fill('Explicit exit probe');
+  await page.getByRole('button', { name:'Save part' }).click();
   await page.getByRole('link', { name:'About' }).click();
   await page.getByRole('button', { name:'Paste a license' }).click();
   await page.getByLabel('License token').fill('demo-only-token');
@@ -53,7 +64,7 @@ test('@claim:sample-demo sample data is one click away, isolated, and discarded 
   expect(await page.evaluate((key) => localStorage.getItem(key), DEMO_KEY)).toBeNull();
   expect(await page.evaluate((key) => localStorage.getItem(key), DEMO_TOKEN_KEY)).toBeNull();
   await page.goto('/demo/');
-  await expect(page.getByText('Demo persistence probe')).toHaveCount(0);
+  await expect(page.getByText('Explicit exit probe')).toHaveCount(0);
 });
 
 test('@claim:bom-allocation duplicate BOM rows allocate stock only once', async ({ page }) => {
@@ -144,9 +155,9 @@ test('@claim:free-limits free mode enforces 40 parts and two builds', async ({ p
 
 test('a new fake license cannot unlock limits during a network failure', async ({ page }) => {
   await page.route('https://api.sociobot.in/**', (route) => route.abort());
-  await page.goto('/demo/');
-  await page.evaluate(({ key, parts }) => localStorage.setItem(key, JSON.stringify({ parts, projects:[] })), { key:DEMO_KEY, parts:fortyParts() });
   await page.goto('/demo/?license=totally-fake');
+  await page.evaluate(({ key, parts }) => localStorage.setItem(key, JSON.stringify({ parts, projects:[] })), { key:DEMO_KEY, parts:fortyParts() });
+  await page.reload();
   await page.getByRole('button', { name:'Add a part' }).click();
   await page.getByLabel('Part name').fill('Part 41');
   await page.getByRole('button', { name:'Save part' }).click();
@@ -220,8 +231,9 @@ test('@claim:license-private license verification sends only the saved token to 
     requests.push(new URL(route.request().url()));
     await route.fulfill({ status:200, contentType:'application/json', body:'{"valid":true,"reason":"ok"}' });
   });
-  await page.addInitScript((key) => localStorage.setItem(key, 'recorded-fixture-token'), DEMO_TOKEN_KEY);
   await page.goto('/demo/');
+  await page.evaluate((key) => localStorage.setItem(key, 'recorded-fixture-token'), DEMO_TOKEN_KEY);
+  await page.reload();
   await expect.poll(() => requests.length).toBe(1);
   expect(requests[0].pathname).toBe('/api/v1/products/bench-bin-bom/verify');
   expect([...requests[0].searchParams.entries()]).toEqual([['license', 'recorded-fixture-token']]);
@@ -271,6 +283,10 @@ test('blank names are rejected and a build can be removed to free a slot', async
   await page.getByRole('button', { name:'Remove build' }).click();
   await expect(page.getByRole('heading', { name:'Your builds' })).toBeVisible();
   await expect(page.locator('.project-card')).toHaveCount(0);
+  await page.getByRole('button', { name:'Undo' }).click();
+  await expect(page.locator('.toast')).toContainText('Build restored.');
+  await expect(page.locator('.toast')).not.toContainText('Part restored.');
+  await expect(page.locator('.project-card')).toHaveCount(1);
 });
 
 test('@claim:price-copy Bench Pass is stated as a $12 one-time purchase', async ({ page }) => {
@@ -287,6 +303,62 @@ test('@claim:installer-checksum both one-line installers verify SHA-256', async 
   expect(powershell).toContain('Get-FileHash');
   expect(powershell).toContain('msiexec.exe');
   expect(powershell).not.toContain('Expand-Archive');
+});
+
+test('@claim:unsigned-installers unsigned desktop packages are disclosed before download', async ({ page }) => {
+  await page.route('https://api.github.com/**', (route) => route.fulfill({
+    status:200,
+    contentType:'application/json',
+    body:JSON.stringify({ tag_name:'v0.1.2', assets:[
+      { name:'Bench.Bin.BOM_0.1.2.AppImage', browser_download_url:'https://example.test/app.AppImage' }
+    ] })
+  }));
+  await page.goto('/');
+  await expect(page.getByText('Download the unsigned installer for your computer.')).toBeVisible();
+  const workflow = readFileSync(resolve(process.cwd(), '.github/workflows/release.yml'), 'utf8');
+  const landingLogic = readFileSync(resolve(process.cwd(), 'site/src.ts'), 'utf8');
+  expect(landingLogic).toContain('The installer is unsigned.');
+  expect(workflow).toContain('Unsigned desktop installers.');
+  expect(workflow).not.toMatch(/APPLE_CERTIFICATE|WINDOWS_CERT_PFX|TAURI_SIGNING_PRIVATE_KEY/);
+});
+
+test('@claim:release-artifacts release manifest covers every desktop target and both macOS architectures', async () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'bench-bin-release-'));
+  try {
+    const names = [
+      'Bench.Bin.BOM_0.1.2_x64_en-US.msi',
+      'Bench.Bin.BOM_0.1.2_amd64.AppImage',
+      'Bench.Bin.BOM_0.1.2_aarch64.dmg',
+      'Bench.Bin.BOM_0.1.2_x64.dmg'
+    ];
+    names.forEach((name) => writeFileSync(resolve(directory, name), `fixture:${name}`));
+    execFileSync(process.execPath, [resolve(process.cwd(), 'scripts/create-release-manifest.mjs'), directory, 'v0.1.2', 'B-Divyesh/sf-bench-bin-bom']);
+    const manifest = JSON.parse(readFileSync(resolve(directory, 'latest.json'), 'utf8'));
+    expect(manifest.version).toBe('0.1.2');
+    expect(Object.keys(manifest.platforms).sort()).toEqual(['linux', 'macos', 'windows']);
+    expect(Object.keys(manifest.platforms.macos).sort()).toEqual(['aarch64', 'x64']);
+    for (const asset of [manifest.platforms.windows, manifest.platforms.linux, manifest.platforms.macos.aarch64, manifest.platforms.macos.x64]) {
+      expect(asset.url).toMatch(/^https:\/\/github\.com\/B-Divyesh\/sf-bench-bin-bom\/releases\/download\/v0\.1\.2\//);
+      expect(asset.sha256).toMatch(/^[a-f0-9]{64}$/);
+    }
+    expect(readFileSync(resolve(directory, 'SHA256SUMS'), 'utf8').trim().split('\n')).toHaveLength(names.length);
+    const workflow = readFileSync(resolve(process.cwd(), '.github/workflows/release.yml'), 'utf8');
+    expect(workflow).toContain('--target aarch64-apple-darwin');
+    expect(workflow).toContain('--target x86_64-apple-darwin');
+    expect(workflow).toContain('scripts/create-release-manifest.mjs');
+  } finally {
+    rmSync(directory, { recursive:true, force:true });
+  }
+});
+
+test('@claim:planning-only the product does not order parts or report electrical compatibility', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Bench Bin BOM does not order parts or confirm electrical compatibility.')).toBeVisible();
+  await page.goto('/demo/');
+  await page.getByRole('link', { name:/Builds/ }).click();
+  await page.getByRole('link', { name:'Open pull list' }).click();
+  await expect(page.getByText('Substitutes need your review.')).toBeVisible();
+  await expect(page.getByText('Check ratings, pinouts, and fit before use.')).toBeVisible();
 });
 
 test('mobile navigation, route focus, metadata, and accessibility pass', async ({ page }) => {

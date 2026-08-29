@@ -1,14 +1,19 @@
 import './style.css';
 import { AppState, BomLine, Part, Project, allocateBom, makeId, parseBom, parseParts, partsCsv, sampleState } from './domain';
-import { download, isDemoMode, loadState, resetDemo, saveState } from './storage';
-import { captureLicense, clearDemoLicense, hasLicense, restoreLicense, verifyLicense } from './license';
+import { download, isContinuingDemoNavigation, isDemoMode, loadState, resetDemo, resumeDemoState, saveState, suspendDemoState } from './storage';
+import { captureLicense, clearDemoLicense, hasLicense, restoreLicense, resumeDemoLicense, suspendDemoLicense, verifyLicense } from './license';
 
 declare const __BUILD_ID__: string;
 const PHOTO_LIMIT = 2 * 1024 * 1024;
 const demo = isDemoMode();
+if (demo) {
+  const continuing = isContinuingDemoNavigation();
+  resumeDemoState();
+  resumeDemoLicense(continuing);
+}
 const capturedLicense = captureLicense();
 let state: AppState = loadState();
-let undo: (() => void) | undefined;
+let undo: { action: () => void; restoredNotice: string } | undefined;
 let notice = '';
 const root = document.querySelector<HTMLDivElement>('#app')!;
 const esc = (value: string) => value.replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character]!));
@@ -66,7 +71,7 @@ function routeLink(route: Route, label: string, extra = '') {
 }
 function appShell(content: string) {
   const banner = demo ? `<aside class="demo-banner" aria-label="Demo mode"><b>Demo — sample data, nothing is saved</b><span>Changes stay separate from your real bench.</span><div><button type="button" data-action="reset-demo">Reset demo</button><button type="button" data-action="start-real">Start for real</button></div></aside>` : '';
-  return `<a class="skip" href="#main">Skip to workspace</a>${banner}<header class="top"><a class="brand" href="${routePath('inventory')}" data-route="inventory" aria-label="Bench Bin BOM home"><span class="brand-mark" aria-hidden="true">▣</span><span>Bench Bin <b>BOM</b></span></a><nav aria-label="Product">${routeLink('inventory', `Bench stock <small>${state.parts.length}</small>`)}${routeLink('projects', `Builds <small>${state.projects.length}</small>`)}${routeLink('about', 'About')}</nav><button class="primary compact" data-action="new-project">New build</button></header><main id="main">${content}</main><footer class="app-footer"><p>Compare a project BOM with parts in your drawers.</p><nav aria-label="Legal">${routeLink('privacy', 'Privacy')} ${routeLink('terms', 'Terms')}</nav><p>Built by Param Factory · v0.1.1 · ${__BUILD_ID__}</p></footer><div class="route-status visually-hidden" aria-live="polite"></div><div class="toast" aria-live="polite">${notice ? `${esc(notice)} ${undo ? '<button data-action="undo">Undo</button>' : ''}` : ''}</div>`;
+  return `<a class="skip" href="#main">Skip to workspace</a>${banner}<header class="top"><a class="brand" href="${routePath('inventory')}" data-route="inventory" aria-label="Bench Bin BOM home"><span class="brand-mark" aria-hidden="true">▣</span><span>Bench Bin <b>BOM</b></span></a><nav aria-label="Product">${routeLink('inventory', `Bench stock <small>${state.parts.length}</small>`)}${routeLink('projects', `Builds <small>${state.projects.length}</small>`)}${routeLink('about', 'About')}</nav><button class="primary compact" data-action="new-project">New build</button></header><main id="main">${content}</main><footer class="app-footer"><p>Compare a project BOM with parts in your drawers.</p><nav aria-label="Legal">${routeLink('privacy', 'Privacy')} ${routeLink('terms', 'Terms')}</nav><p>Built by Param Factory · v0.1.2 · ${__BUILD_ID__}</p></footer><div class="route-status visually-hidden" aria-live="polite"></div><div class="toast" aria-live="polite">${notice ? `${esc(notice)} ${undo ? '<button data-action="undo">Undo</button>' : ''}` : ''}</div>`;
 }
 
 function inventory() {
@@ -153,7 +158,7 @@ function partDialog(part?: Part) {
     const next = { ...state, parts: state.parts.filter((current) => current.id !== item.id) };
     if (!commit(next, dialog.querySelector('.error'))) return;
     notice = `${item.name} removed.`;
-    undo = () => { commit({ ...state, parts: [...state.parts, item] }); };
+    undo = { action: () => { commit({ ...state, parts: [...state.parts, item] }); }, restoredNotice:'Part restored.' };
     dialog.close(); render();
   });
 }
@@ -176,7 +181,7 @@ function projectDialog(project?: Project) {
     const next = { ...state, projects: state.projects.filter((current) => current.id !== item.id), activeProjectId: state.activeProjectId === item.id ? undefined : state.activeProjectId };
     if (!commit(next, dialog.querySelector('.error'))) return;
     notice = `${item.name} removed.`;
-    undo = () => { commit({ ...state, projects:[...state.projects, item], activeProjectId:item.id }); };
+    undo = { action: () => { commit({ ...state, projects:[...state.projects, item], activeProjectId:item.id }); }, restoredNotice:'Build restored.' };
     dialog.close();
     navigate('projects');
   });
@@ -235,7 +240,14 @@ function bind() {
   root.querySelector('[data-action="edit-project"]')?.addEventListener('click', () => { const project = active(); if (project) projectDialog(project); });
   root.querySelector('[data-action="export-parts"]')?.addEventListener('click', () => { download('bench-bin-parts.csv', partsCsv(state.parts)); notice = 'Bench CSV exported.'; render(); });
   root.querySelector('[data-action="print"]')?.addEventListener('click', () => window.print());
-  root.querySelector('[data-action="undo"]')?.addEventListener('click', () => { undo?.(); undo = undefined; notice = 'Part restored.'; render(); });
+  root.querySelector('[data-action="undo"]')?.addEventListener('click', () => {
+    if (!undo) return;
+    const { action, restoredNotice } = undo;
+    action();
+    undo = undefined;
+    notice = restoredNotice;
+    render();
+  });
   root.querySelector('[data-action="load-sample"]')?.addEventListener('click', () => {
     if (location.protocol.startsWith('http')) location.assign('/demo/');
     else location.assign('/?demo=1');
@@ -265,6 +277,20 @@ function bind() {
 window.addEventListener('popstate', () => render(true));
 window.addEventListener('online', () => { notice = 'Back online. Your bench data stayed on this device.'; render(); });
 window.addEventListener('offline', () => { notice = 'Offline. The desktop app keeps working with local data.'; render(); });
+if (demo) {
+  window.addEventListener('pagehide', () => {
+    suspendDemoState();
+    suspendDemoLicense();
+  });
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    state = resetDemo();
+    clearDemoLicense();
+    undo = undefined;
+    notice = 'Demo reset after you left.';
+    render();
+  });
+}
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
 verifyLicense().then((valid) => {
   if (capturedLicense) notice = valid ? 'Bench Pass verified.' : 'That license could not be verified. Free limits still apply.';

@@ -15,6 +15,7 @@ describe('storage boundaries', () => {
   beforeEach(() => {
     storage = new MemoryStorage();
     vi.stubGlobal('localStorage', storage);
+    vi.stubGlobal('sessionStorage', new MemoryStorage());
     vi.stubGlobal('location', { pathname:'/demo/', search:'' });
   });
 
@@ -47,6 +48,7 @@ describe('license trust', () => {
   beforeEach(() => {
     storage = new MemoryStorage();
     vi.stubGlobal('localStorage', storage);
+    vi.stubGlobal('sessionStorage', new MemoryStorage());
     vi.stubGlobal('location', { pathname:'/', search:'', href:'http://localhost/' });
   });
 

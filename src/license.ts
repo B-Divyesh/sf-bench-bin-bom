@@ -1,5 +1,7 @@
 const KEY = 'sb_license:bench-bin-bom';
 const DEMO_KEY = 'demo:sb_license:bench-bin-bom';
+const DEMO_RELOAD_KEY = 'demo:sb_license:bench-bin-bom:reload';
+const DEMO_VERDICT_RELOAD_KEY = `${DEMO_RELOAD_KEY}:verdict`;
 const DAY = 86_400_000;
 const base = 'https://api.sociobot.in/api/v1/products/bench-bin-bom';
 type Verdict = { valid: boolean; at: number };
@@ -50,6 +52,28 @@ export function restoreLicense(token: string) {
   localStorage.removeItem(storage.verdict);
 }
 export function clearDemoLicense() {
+  localStorage.removeItem(DEMO_KEY);
+  localStorage.removeItem(`${DEMO_KEY}:verdict`);
+  sessionStorage.removeItem(DEMO_RELOAD_KEY);
+  sessionStorage.removeItem(DEMO_VERDICT_RELOAD_KEY);
+}
+export function resumeDemoLicense(continuing: boolean) {
+  const token = sessionStorage.getItem(DEMO_RELOAD_KEY);
+  const verdict = sessionStorage.getItem(DEMO_VERDICT_RELOAD_KEY);
+  if (continuing && token) localStorage.setItem(DEMO_KEY, token);
+  else if (!continuing) localStorage.removeItem(DEMO_KEY);
+  if (continuing && verdict) localStorage.setItem(`${DEMO_KEY}:verdict`, verdict);
+  else if (!continuing) localStorage.removeItem(`${DEMO_KEY}:verdict`);
+  sessionStorage.removeItem(DEMO_RELOAD_KEY);
+  sessionStorage.removeItem(DEMO_VERDICT_RELOAD_KEY);
+}
+export function suspendDemoLicense() {
+  const token = localStorage.getItem(DEMO_KEY);
+  const verdict = localStorage.getItem(`${DEMO_KEY}:verdict`);
+  if (token) sessionStorage.setItem(DEMO_RELOAD_KEY, token);
+  else sessionStorage.removeItem(DEMO_RELOAD_KEY);
+  if (verdict) sessionStorage.setItem(DEMO_VERDICT_RELOAD_KEY, verdict);
+  else sessionStorage.removeItem(DEMO_VERDICT_RELOAD_KEY);
   localStorage.removeItem(DEMO_KEY);
   localStorage.removeItem(`${DEMO_KEY}:verdict`);
 }

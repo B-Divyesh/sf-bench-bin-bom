@@ -65,29 +65,7 @@ jobs:
         run: |
           mkdir release-assets
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release-assets
-          (cd release-assets && sha256sum * > SHA256SUMS)
-          python3 - <<'PY' > release-assets/latest.json
-          import glob,json,os
-          tag=os.environ['TAG']; repo=os.environ['GITHUB_REPOSITORY']; assets=glob.glob('release-assets/*')
-          url=lambda f:f'https://github.com/{repo}/releases/download/{tag}/'+os.path.basename(f)
-          pick=lambda needles:next((f for f in assets if all(n.lower() in os.path.basename(f).lower() for n in needles)),None)
-          platforms={}
-          for key, needles in [('windows',['.msi']),('linux',['.appimage'])]:
-            f=pick(needles)
-            if f:
-              name=os.path.basename(f)
-              digest=next(line.split()[0] for line in open('release-assets/SHA256SUMS') if line.rstrip().endswith('  '+name))
-              platforms[key]={'url':url(f),'sha256':digest}
-          macos={}
-          for architecture, needles in [('aarch64',['aarch64','.dmg']),('x64',['x64','.dmg'])]:
-            f=pick(needles)
-            if f:
-              name=os.path.basename(f)
-              digest=next(line.split()[0] for line in open('release-assets/SHA256SUMS') if line.rstrip().endswith('  '+name))
-              macos[architecture]={'url':url(f),'sha256':digest}
-          if macos: platforms['macos']=macos
-          print(json.dumps({'version':tag.lstrip('v'),'platforms':platforms}))
-          PY
+          node scripts/create-release-manifest.mjs release-assets "$TAG" "$GITHUB_REPOSITORY"
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
