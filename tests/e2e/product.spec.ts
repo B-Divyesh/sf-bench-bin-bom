@@ -386,6 +386,19 @@ test('@claim:price-copy Bench Pass is stated as a $12 one-time purchase', async 
   await expect(page.getByText('Bench Pass costs US$12 as a one-time purchase.')).toBeVisible();
 });
 
+test('@claim:checkout-destination Bench Pass opens the Sociobot checkout redirect without starting a purchase', async ({ page, request }) => {
+  await page.goto('/');
+  await expect(page.getByRole('link', { name:'Buy Bench Pass for $12 (external checkout)' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout');
+  await expect(page.getByText('Checkout opens on an external site.')).toBeVisible();
+  await page.goto('/demo/?demo=1');
+  await page.getByRole('link', { name:'About' }).click();
+  await expect(page.getByRole('link', { name:'Buy Bench Pass for $12 (external checkout)' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout');
+  await expect(page.getByText('Checkout opens on an external site.')).toBeVisible();
+  const response = await request.fetch('https://api.sociobot.in/api/v1/products/bench-bin-bom/checkout', { maxRedirects:0 });
+  expect(response.status()).toBe(303);
+  expect(new URL(response.headers().location).hostname).toBe('checkout.dodopayments.com');
+});
+
 test('@claim:installer-checksum both one-line installers verify SHA-256', async ({ request }) => {
   const shell = await (await request.get('/install.sh')).text();
   const powershell = await (await request.get('/install.ps1')).text();
@@ -527,7 +540,9 @@ test('reviewed landing and README copy stays plain and self-explanatory', async 
   await expect(page.getByText('Try the real workflow')).toHaveCount(0);
   await expect(page.getByText('Clear boundaries')).toHaveCount(0);
   await expect(page.getByText('parts list (BOM)')).toBeVisible();
-  await expect(page.getByText('Opens secure Sociobot checkout.')).toBeVisible();
+  await expect(page.getByText('Checkout opens on an external site.')).toBeVisible();
+  await expect(page.getByText('Your operating system may ask you to confirm it.')).toHaveCount(0);
+  await expect(page.getByRole('link', { name:'Buy Bench Pass for $12 (external checkout)' })).toBeVisible();
   await expect(page.getByRole('link', { name:'View source on GitHub (opens external site)' })).toBeVisible();
 });
 

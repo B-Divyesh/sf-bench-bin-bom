@@ -1,1 +1,1 @@
-Check a project parts list against your bench drawers and find shortages before building.
+Check project parts lists against bench drawers before you start building.

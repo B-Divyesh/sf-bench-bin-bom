@@ -41,7 +41,7 @@ build routes.
 
 Push a version tag such as `v0.1.3` to build installers for macOS, Windows, and
 Linux. The release also publishes `SHA256SUMS` and `latest.json`.
-Installers are unsigned, so macOS and Windows may ask for confirmation.
+Installers are unsigned.
 
 The landing page checks GitHub for the latest release and keeps that result for
 one hour. If that lookup fails, it links to the release page.

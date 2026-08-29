@@ -49,7 +49,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Bench Bin BOM ${{ github.ref_name }}'
-          releaseBody: 'Unsigned desktop installers. On macOS use right-click → Open; Windows SmartScreen may ask for confirmation.'
+          releaseBody: 'Unsigned desktop installers. On macOS, use right-click → Open.'
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

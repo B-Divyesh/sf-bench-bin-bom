@@ -22,9 +22,8 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as on
 | The free app holds 40 stock parts and two builds. | 10 |
 | Bench Pass removes those limits. | 5 |
 | CSV export, accessibility, and safety notes stay free. | 8 |
-| Opens secure Sociobot checkout. | 4 |
+| Checkout opens on an external site. | 6 |
 | Download the unsigned installer for your computer. | 7 |
-| Your operating system may ask you to confirm it. | 9 |
 | Checking GitHub for the latest release. | 6 |
 | Downloads open on GitHub. | 4 |
 | Compare a project parts list with parts in your drawers. | 10 |
@@ -56,7 +55,7 @@ Audited 2026-08-29. Counts treat hyphenated terms, URLs, paths, and prices as on
 | The web demo works offline after its first visit, including nested build routes. | 13 |
 | Push a version tag such as v0.1.3 to build installers for macOS, Windows, and Linux. | 16 |
 | The release also publishes SHA256SUMS and latest.json. | 8 |
-| Installers are unsigned, so macOS and Windows may ask for confirmation. | 11 |
+| Installers are unsigned. | 3 |
 | The landing page checks GitHub for the latest release and keeps that result for one hour. | 16 |
 | If that lookup fails, it links to the release page. | 10 |
 | /install.sh and /install.ps1 verify SHA-256 before installation. | 7 |
