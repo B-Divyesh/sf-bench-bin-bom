@@ -82,8 +82,45 @@ Evidence recorded on 2026-08-29 UTC:
 
 ## Release and deployment
 
-Release and live deployment evidence will be added after the v0.1.1 matrix and
-the factory static deployment complete.
+Released and deployed on 2026-08-29 UTC:
+
+- Static deployment: <https://bench-bin-bom.sociobot.in>, managed TLS ready,
+  HTTP 200, runtime build identity `50d838d2`.
+- Product-quality workflow `33258445513`: passed.
+- Release workflow `33258450183`: passed its clean verify gate, Windows,
+  Linux, macOS arm64, macOS x64, and manifest jobs.
+- GitHub release: <https://github.com/B-Divyesh/sf-bench-bin-bom/releases/tag/v0.1.1>.
+  It includes MSI and EXE, AppImage, DEB, RPM, arm64 and x64 DMGs, app
+  archives, `SHA256SUMS`, and `latest.json`.
+- Downloaded release assets passed `sha256sum -c SHA256SUMS`: Windows MSI
+  `d225ef4ef56e9aafeac26f1c1bc6ba07121ec2e0c1d254089509a6c6ebef425f`,
+  Linux AppImage
+  `9ca61e94307df1a3a89bfa0c7dd45ddec00079e6f169ae8489eca7355933906c`,
+  Linux DEB
+  `4d1322a9c9d10660f4d383ba69f9a38b75cef460bc7c4be04756617b33e200e7`,
+  arm64 DMG
+  `8545cd75b471e113050f6e7e76d9d2d90b1fdcfba15d6a5e1a5794f8b0de6662`,
+  and x64 DMG
+  `b00f8dff81d43478fb93dd28352aa7b8a492f8abc0ad61e346d8facd48956862`.
+  `latest.json` reports version 0.1.1 and the same selected Windows, Linux,
+  and macOS digests.
+- A fresh live Linux visit resolved its detected-platform button to the real
+  v0.1.1 AppImage and rendered `Version 0.1.1. The installer is unsigned.`
+  without console errors.
+- Live `/`, `/demo/`, `/demo/builds`, `/privacy/`, and `/terms/` return 200.
+  An unknown path returns the designed 404 document with HTTP 404.
+- Live response checks confirm the enforced CSP and frame denial,
+  `Permissions-Policy`, `Referrer-Policy`, `nosniff`, HSTS, and one-year
+  immutable asset caching. The service worker is served with `no-cache`.
+- Live `verify-url.sh` passed on `/` and `/demo/` with no browser errors.
+  A desktop and 390 px browser run found zero serious or critical axe issues,
+  visible keyboard skip focus, no overflow at 200% text, all mobile navigation
+  targets at least 44 px, no third-party demo requests, and a successful
+  offline demo reload.
+- Live Lighthouse 12.8.2 mobile: performance 100, accessibility 100, best
+  practices 100, SEO 100; FCP 1.0 s, LCP 1.1 s, TBT 0 ms, CLS 0.
+- Live landing, demo, legal, 404, installer, robots, sitemap, and product-image
+  bytes match the clean `dist/site` build exactly.
 
 ## Known gaps
 
