@@ -1,68 +1,49 @@
-# Handoff — polish round 3
+# Handoff — independent verification 7
 
 ## Outcome
 
-**PASS.** The complete cumulative review set is closed. The repair is in
-`c865d1529bd26e76855c3dc513705d8f2b759d5f` and the version-footer repair is
-`8dcff4471ccd6515b04cbf188106d7db59ac2d15`, tagged `v0.1.5`.
+**PASS.** Candidate `3076522ba89801cf0446a4d5bcf9af176b6cd1d1` is accepted
+for <https://bench-bin-bom.sociobot.in>. The live footer build ID is
+`3076522b`, and freshly built candidate landing/demo HTML and deployed assets
+matched byte-for-byte.
 
-F-3-1 now names only a factual external checkout and has the registered
-`checkout-destination` redirect test. F-3-2's unsupported operating-system
-prediction was removed from landing, desktop About, README, installer output,
-and future release text. The tested unsigned disclosure remains.
+## What was verified
 
-## What changed
+- All 24 `.factory/claims.json` tests passed separately from this clean
+  checkout; the full Playwright suite passed 36 tests.
+- `npm test` passed 12 tests; lint, desktop/site production builds, locked
+  Rust check/test, and the production-equivalent Debian Tauri bundle passed.
+- The live 390px and desktop flows passed: plain first read, one-click isolated
+  sample, BOM CSV import, reset/exit isolation, legal/404 routes, keyboard and
+  focus coverage, reduced motion, zero serious/critical axe findings, no page
+  errors, and service-worker offline nested reload.
+- Privacy checks found no third-party request during a complete demo flow;
+  only the declared GitHub release lookup occurs on a cold landing. License
+  verification sends only a token to Sociobot. The observed allowance is 30
+  requests per client burst, then `429 Retry-After: 4`.
+- Live mobile Lighthouse scored 100 Performance, 100 Accessibility, 100 Best
+  Practices, and 100 SEO (LCP 1.1s, CLS 0). Core JS/CSS are well below budget.
+- Release `v0.1.5` has Windows, Linux, macOS arm64/x64, `SHA256SUMS`, and
+  `latest.json`; a downloaded Linux `.deb` passed its published checksum.
 
-- Added the 24th claim and unique Playwright test for the non-purchasing
-  Sociobot-to-Dodo checkout redirect.
-- Kept the direct `?demo=1` sandbox, persistent banner, reset, exit cleanup,
-  sample-first mobile screen, real CSV file import, legal routes, and 404
-  regression coverage from prior rounds.
-- Released the desktop app as v0.1.5 so the download resolves to a binary with
-  the repaired About copy and version footer; local Debian package verified as
-  `bench-bin-bom` v0.1.5 amd64 (4,340,112 bytes).
-- Updated the catalog description to a 75-character verb-first sentence.
-
-## Exact verification
-
-- Clean clone: `/tmp/bench-bin-bom-polish3-final.hbpffP/repo` at
-  `8dcff4471ccd6515b04cbf188106d7db59ac2d15`; `npm ci --include=dev` completed
-  with 64 packages and zero vulnerabilities.
-- Every one of the 24 commands declared in `.factory/claims.json` passed
-  separately from that clone, including `@claim:checkout-destination`.
-- Same clean clone: `npm test` passed 12 tests; `npm run lint`, `npm run build`,
-  `npm run build:site`, and `npm run test:e2e` passed. The browser suite has 36
-  Chromium tests covering axe, keyboard, 390 px layout, demo isolation, privacy,
-  offline reload, legal routes, titles, focus, and 404 behavior.
-- Release worktree: `cargo test --locked --manifest-path src-tauri/Cargo.toml`,
-  `cargo check --locked --manifest-path src-tauri/Cargo.toml`, and
-  `CI=true npm run tauri build -- --bundles deb` passed.
-- Release workflow: <https://github.com/B-Divyesh/sf-bench-bin-bom/actions/runs/33282510282>
-  completed successfully for macOS arm64/x64, Windows, and Linux. The published
-  Linux Debian package is `bench-bin-bom` v0.1.5 amd64 and SHA-256
-  `87a12950a1cf2af643d884523a6261920b3e5f87837e5a6e2c99dae3b13f6797`.
-- Static deployment `3a4b0ae2-ae13-4559-a293-d976c190115b` completed. A cold
-  live pass of `scripts/verify-live.mjs` checked 21 behaviors with no errors.
-  `verify-url.sh` passed home, demo, Privacy, and Terms. Fresh evidence is in
-  `.factory/evidence/polish-3/`.
-- Live Lighthouse: Performance 100, Accessibility 100, Best Practices 100,
-  SEO 100; LCP 1.1 s and CLS 0. The cold checkout endpoint returned HTTP 303
-  to Dodo without starting a purchase.
-
-## Run and deploy
+## Run and verify
 
 ```sh
-npm ci --include=dev
+npm ci
 npm test
 npm run lint
 npm run build
 npm run build:site
 npm run test:e2e
 cargo check --locked --manifest-path src-tauri/Cargo.toml
-/opt/fleet/lib/deploy-static.sh bench-bin-bom dist/site
+cargo test --locked --manifest-path src-tauri/Cargo.toml
+CI=true npm run tauri build -- --bundles deb
 ```
 
-## Known gaps and operator action
+## Known gaps and next steps
 
-None. The desktop installers are intentionally unsigned. No signing credentials
-are configured or required for this release.
+No product defects found. Installers are intentionally unsigned and accurately
+disclosed before download. In this disposable QA image, Tauri needs standard
+GTK/GLib development packages and rejects the host's `CI=1`; use boolean
+`CI=true` as GitHub Actions does. See `.factory/verification-7.md` for exact
+evidence.
