@@ -1,8 +1,9 @@
 # Polish round 3 — complete cumulative closure
 
 Candidate `735ffeaa6ec51743541543bb4adadd9530d86afe` and the adversarial review
-at `59578ec1619f047cfbdf0ffc37abb53a3237524c` were repaired in product commit
-`c865d1529bd26e76855c3dc513705d8f2b759d5f`. This pass reread
+at `59578ec1619f047cfbdf0ffc37abb53a3237524c` were repaired in product commits
+`c865d1529bd26e76855c3dc513705d8f2b759d5f` and
+`8dcff4471ccd6515b04cbf188106d7db59ac2d15` (v0.1.5). This pass reread
 `.factory/review-1.md`, `.factory/review-2.md`, `.factory/review-3.md`,
 `.factory/polish-1.md`, and `.factory/polish-2.md`.
 
@@ -51,5 +52,11 @@ Direct isolated demo: <https://bench-bin-bom.sociobot.in/demo/?demo=1>
 - `scripts/verify-live.mjs` and `/opt/fleet/lib/verify-url.sh` passed after the
   static deployment. The live 404, legal routes, direct demo, checkout label,
   no-console-error rule, and serious/critical axe checks were repeated cold.
+- v0.1.5 release workflow
+  [33282510282](https://github.com/B-Divyesh/sf-bench-bin-bom/actions/runs/33282510282)
+  passed all platform and manifest jobs. Deployment
+  `3a4b0ae2-ae13-4559-a293-d976c190115b` is live at
+  <https://bench-bin-bom.sociobot.in>. The published Debian package matches
+  `SHA256SUMS`; Lighthouse scored 100/100/100/100 with 1.1 s LCP and 0 CLS.
 
 No finding of any severity remains open.

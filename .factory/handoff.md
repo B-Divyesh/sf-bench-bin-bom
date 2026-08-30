@@ -3,8 +3,8 @@
 ## Outcome
 
 **PASS.** The complete cumulative review set is closed. The repair is in
-`c865d1529bd26e76855c3dc513705d8f2b759d5f`; v0.1.4 is
-`9d26ef1139098aae886ebda57c136b31c2f20a61` and is tagged `v0.1.4`.
+`c865d1529bd26e76855c3dc513705d8f2b759d5f` and the version-footer repair is
+`8dcff4471ccd6515b04cbf188106d7db59ac2d15`, tagged `v0.1.5`.
 
 F-3-1 now names only a factual external checkout and has the registered
 `checkout-destination` redirect test. F-3-2's unsupported operating-system
@@ -18,15 +18,15 @@ and future release text. The tested unsigned disclosure remains.
 - Kept the direct `?demo=1` sandbox, persistent banner, reset, exit cleanup,
   sample-first mobile screen, real CSV file import, legal routes, and 404
   regression coverage from prior rounds.
-- Released the desktop app as v0.1.4 so the download resolves to a binary with
-  the repaired About copy; local Debian package verified as `bench-bin-bom`
-  v0.1.4 amd64 (4,340,280 bytes).
+- Released the desktop app as v0.1.5 so the download resolves to a binary with
+  the repaired About copy and version footer; local Debian package verified as
+  `bench-bin-bom` v0.1.5 amd64 (4,340,112 bytes).
 - Updated the catalog description to a 75-character verb-first sentence.
 
 ## Exact verification
 
-- Clean clone: `/tmp/bench-bin-bom-polish3-clean.RScCc6/repo` at
-  `9d26ef1139098aae886ebda57c136b31c2f20a61`; `npm ci --include=dev` completed
+- Clean clone: `/tmp/bench-bin-bom-polish3-final.hbpffP/repo` at
+  `8dcff4471ccd6515b04cbf188106d7db59ac2d15`; `npm ci --include=dev` completed
   with 64 packages and zero vulnerabilities.
 - Every one of the 24 commands declared in `.factory/claims.json` passed
   separately from that clone, including `@claim:checkout-destination`.
@@ -37,8 +37,17 @@ and future release text. The tested unsigned disclosure remains.
 - Release worktree: `cargo test --locked --manifest-path src-tauri/Cargo.toml`,
   `cargo check --locked --manifest-path src-tauri/Cargo.toml`, and
   `CI=true npm run tauri build -- --bundles deb` passed.
-- Release workflow: <https://github.com/B-Divyesh/sf-bench-bin-bom/actions/runs/33281762050>.
-- Static deployment and cold live recheck are recorded in `.factory/polish-3.md`.
+- Release workflow: <https://github.com/B-Divyesh/sf-bench-bin-bom/actions/runs/33282510282>
+  completed successfully for macOS arm64/x64, Windows, and Linux. The published
+  Linux Debian package is `bench-bin-bom` v0.1.5 amd64 and SHA-256
+  `87a12950a1cf2af643d884523a6261920b3e5f87837e5a6e2c99dae3b13f6797`.
+- Static deployment `3a4b0ae2-ae13-4559-a293-d976c190115b` completed. A cold
+  live pass of `scripts/verify-live.mjs` checked 21 behaviors with no errors.
+  `verify-url.sh` passed home, demo, Privacy, and Terms. Fresh evidence is in
+  `.factory/evidence/polish-3/`.
+- Live Lighthouse: Performance 100, Accessibility 100, Best Practices 100,
+  SEO 100; LCP 1.1 s and CLS 0. The cold checkout endpoint returned HTTP 303
+  to Dodo without starting a purchase.
 
 ## Run and deploy
 
